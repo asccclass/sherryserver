@@ -6,6 +6,7 @@ package SherryServer
 import(
    "os"
 	"regexp"
+	"strings"
    "reflect"
    "net/http"
    "path/filepath"
@@ -74,6 +75,6 @@ func(h StaticFileServer)  ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func(app *StaticFileServer) AddRouter(router *http.ServeMux) {	
-   fs := http.FileServer(http.Dir(h.StaticPath))   // .ServeHTTP(w, r)  // return Handler
+   fs := http.FileServer(http.Dir(app.StaticPath))   // .ServeHTTP(w, r)  // return Handler
 	router.Handle("/", http.StripPrefix("/", fs))
 }
