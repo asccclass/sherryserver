@@ -54,7 +54,6 @@ func(h StaticFileServer) GetHeader(r *http.Request, data interface{}) {
    }
 }
 
-// ServeHTTP 名稱要固定for mux
 func(h StaticFileServer)  ServeHTTP(w http.ResponseWriter, r *http.Request) {
    path, err := filepath.Abs(r.URL.Path)
    if err != nil {
@@ -70,5 +69,11 @@ func(h StaticFileServer)  ServeHTTP(w http.ResponseWriter, r *http.Request) {
       http.Error(w, err.Error(), http.StatusInternalServerError)  // 500 internal server error
       return
    }
-   http.FileServer(http.Dir(h.StaticPath)).ServeHTTP(w, r)
+   fs := http.FileServer(http.Dir(h.StaticPath))   // .ServeHTTP(w, r)  // return Handler
+	http.Handle("/", http.StripPrefix("/", fs))
+}
+
+func(app *StaticFileServer) AddRouter(router *http.ServeMux) {	
+   fs := http.FileServer(http.Dir(h.StaticPath))   // .ServeHTTP(w, r)  // return Handler
+	router.Handle("/", http.StripPrefix("/", fs))
 }
