@@ -12,6 +12,7 @@ import(
    "net/http"
    "os/signal"
    "go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
    "github.com/joho/godotenv"
 )
 
@@ -71,7 +72,7 @@ func(app *Server) gracefulShutdown() {
 func(app *Server) Start() {
    defer app.gracefulShutdown()
    go func() {
-      if err := app.Server.ListenAndServe(app.Server.Addr, app.Server.Handler); err != nil && err != http.ErrServerClosed {
+      if err := app.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
          app.Logger.Fatal(err.Error(), zap.String("addr", app.Server.Addr))
       }
    }()
@@ -90,7 +91,7 @@ func NewServer(listenAddr, documentRoot, templatePath string) (*Server, error) {
       return nil, err
    }
    errorLog, _ := zap.NewStdLogAt(logger, zap.ErrorLevel)
-   srv := http.Server{
+   srv := &http.Server{
       Addr:         listenAddr,
       // Handler:      router,   // 後面再assign
       ErrorLog:     errorLog,
