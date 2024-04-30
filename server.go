@@ -20,6 +20,8 @@ type Server struct {
    SystemName   string
    Logger       *zap.Logger
    Server       *http.Server
+   OriginAllow  *SryWords.AhoCorasick
+   MethodAllow  *SryWords.AhoCorasick
    /*
    Template     *SherryTemplate.Template
    GeoLocation  *SherryGeoLocation.SryLocation
@@ -35,8 +37,6 @@ type Server struct {
    SSE          *SherrySSE.SrySSE
    JWT          *SryAuth.SryJWT
    Crawer       *SherryCrawer.SryCrawer
-   OriginAllow  *SryWords.AhoCorasick
-   MethodAllow  *SryWords.AhoCorasick
    Taider       *SryTAIDE.Taide
    GeminiBot    *SherryLineBot.GeminiBot  // Genini Bot
    */
