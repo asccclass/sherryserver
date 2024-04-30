@@ -5,6 +5,7 @@ package SherryServer
 
 import(
    "os"
+	"regexp"
    "reflect"
    "net/http"
    "path/filepath"
@@ -19,6 +20,17 @@ type StaticFileServer struct {
 type Register_Header struct{
    Method string `header:"x-api-key" validate:"len=10"`
    Agent string `header:"User-Agent"`
+}
+
+func(h StaticFileServer) FixPrefix(prefix string)(string) {
+	prefix = regexp.MustCompile(`/*$`).ReplaceAllString(prefix, "")
+	if !strings.HasPrefix(prefix, "/") {
+		prefix = "/" + prefix
+	}
+	if prefix == "/" {
+		prefix = ""
+	}
+	return prefix
 }
 
 // 取得Header參數
@@ -43,7 +55,7 @@ func(h StaticFileServer) GetHeader(r *http.Request, data interface{}) {
 }
 
 // ServeHTTP 名稱要固定for mux
-func(h StaticFileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func(h StaticFileServer)  ServeHTTP(w http.ResponseWriter, r *http.Request) {
    path, err := filepath.Abs(r.URL.Path)
    if err != nil {
       http.Error(w, err.Error(), http.StatusBadRequest)  // 400 bad request
