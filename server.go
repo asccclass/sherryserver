@@ -99,5 +99,15 @@ func NewServer(listenAddr, documentRoot, templatePath string) (*Server, error) {
       WriteTimeout: 10 * time.Second,
       IdleTimeout:  15 * time.Second,
    }
-   return &Server {name, logger, srv }, nil
+	// 處理Original 
+   orglists := NewAhoCorasick()
+   methodlists := NewAhoCorasick()
+   orgs := os.Getenv("OriginAllowList")   // ex."http://127.0.0.1:9999";....
+   if orgs != "" {  // 有設定CROS
+      orglists.AddPatterns(orgs, ";")
+   } 
+   if methods := os.Getenv("AllowMethods"); methods != "" {
+      methodlists.AddPatterns(strings.ToUpper(methods), ";")
+   }
+   return &Server {name, logger, srv, orglists, methodlists }, nil
 }
