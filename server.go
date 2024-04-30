@@ -20,8 +20,8 @@ type Server struct {
    SystemName   string
    Logger       *zap.Logger
    Server       *http.Server
-   OriginAllow  *SryWords.AhoCorasick
-   MethodAllow  *SryWords.AhoCorasick
+   OriginAllow  *AhoCorasick
+   MethodAllow  *AhoCorasick
    /*
    Template     *SherryTemplate.Template
    GeoLocation  *SherryGeoLocation.SryLocation
