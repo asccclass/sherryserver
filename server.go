@@ -5,6 +5,8 @@ package SherryServer
 
 import(
    "os"
+	"fmt"
+	"time"
    "context"
    "syscall"
    "net/http"
@@ -40,7 +42,7 @@ type Server struct {
 }
 
 // shutdown 關閉伺服器程序
-func(app *ShryServer)gracefulShutdown() {
+func(app *Server) gracefulShutdown() {
    defer app.Logger.Sync()
    // kill (no param) default send syscall.SIGTERM
    // kill -2 is syscall.SIGINT
