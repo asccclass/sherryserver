@@ -4,9 +4,11 @@ import(
    "os"
    "strings"
    "net/http"
+	"github.com/asccclass/sherryserver"
 )
 
 type Oauth2 struct {
+	Server *sherryserver.Server   // Server is the server that this middleware is attached to.
    ClientID [string]	// ClientID is the application's ID.
    ClientSecret [string]// ClientSecret is the application's secret.
    Endpoint [string]
@@ -16,24 +18,28 @@ type Oauth2 struct {
 
 // http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 // code := r.URL.Query().Get("code")
-func googleHandler(w http.ResponseWriter, r *http.Request) {
+func(app *Oauth2) googleHandler(w http.ResponseWriter, r *http.Request) {
    // url := Oauth2.AuthCodeURL("state", oauth2.AccessTypeOffline)
    // http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
-func AddRouter(router *mux.Router) {
-   // router.HandleFunc("GET /auth/login/google", googleHandler)
+func(app *Oauth2) AddRouter(router *mux.Router) {
+   router.HandleFunc("GET /login/fisa", app.FISALogin)
+   router.HandleFunc("GET /callback/fisa", app.FISACallback)
 }
 
-func NewOauth(redirectUri, scopes string)(*Oauth2, error) {
+// "email,profile"
+func NewOauth(server *SherryServer.Server, scopes string)(*Oauth2, error) {
    endpoint := os.Getenv("EndPoint")
    clientID := os.Getenv("ClientID")
    clientSecret := os.Getenv("ClientSecret")
+	redirectUri := os.Getenv("RedirectUri") // RedirectUri is the URL to redirect users going through the OAuth flow
    if endpoint == "" || clientID == "" || clientSecret == "" || redirectUri == "" || scopes == "" {
       return nil, errors.New("Missing required parameters")
    }
    sps := strings.Split(scopes, ",")
    return &Oauth2{
+		Server: server,
       ClientID: clientID,
       ClientSecret: clientSecret,
       Endpoint: "https://api.twitter.com/oauth2/token",

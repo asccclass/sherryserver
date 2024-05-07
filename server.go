@@ -15,6 +15,7 @@ import(
    "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
    "github.com/joho/godotenv"
+	"github.com/alexedwards/scs/v2"
 )
 
 type Server struct {
@@ -23,6 +24,7 @@ type Server struct {
    Server       *http.Server
    OriginAllow  *AhoCorasick
    MethodAllow  *AhoCorasick
+   SessionManager *scs.SessionManager
    /*
    Template     *SherryTemplate.Template
    GeoLocation  *SherryGeoLocation.SryLocation
@@ -100,6 +102,9 @@ func NewServer(listenAddr, documentRoot, templatePath string) (*Server, error) {
       WriteTimeout: 10 * time.Second,
       IdleTimeout:  15 * time.Second,
    }
+   // 建立 Session Store
+   var sessionManager *scs.SessionManager
+	sessionManager = scs.New()
 	// 處理Original 
    orglists := NewAhoCorasick()
    methodlists := NewAhoCorasick()
@@ -110,5 +115,5 @@ func NewServer(listenAddr, documentRoot, templatePath string) (*Server, error) {
    if methods := os.Getenv("AllowMethods"); methods != "" {
       methodlists.AddPatterns(strings.ToUpper(methods), ";")
    }
-   return &Server {name, logger, srv, orglists, methodlists }, nil
+   return &Server {name, logger, srv, orglists, methodlists, sessionManager }, nil
 }
