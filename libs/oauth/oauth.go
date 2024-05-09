@@ -1,15 +1,17 @@
 package Oauth
 
 import(
+   "io"
    "os"
    "strings"
    "net/http"
+   "crypto/rand"
    "encoding/base64"
 	"github.com/asccclass/sherryserver"
 )
 
 type Oauth2 struct {
-	Server *sherryserver.Server   // Server is the server that this middleware is attached to.
+	Server *SherryServer.Server   // Server is the server that this middleware is attached to.
    ClientID  string	// ClientID is the application's ID.
    ClientSecret string// ClientSecret is the application's secret.
    Endpoint string
@@ -31,7 +33,7 @@ func(app *Oauth2) State(n int) (string, error) {
 // 檢查是否有已經登入
 func(app *Oauth2) Protect(next http.Handler) http.Handler { 
    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-      session := sessionManager.Load(r.Context())
+      session := app.Server.SessionManager.Load(r.Context())
       email := session.GetString(r.Context(), "email")
       if email != "" {  
          code := r.URL.Query().Get("code")
@@ -48,9 +50,9 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
 	})
 }
 
-func(app *Oauth2) AddRouter(router *mux.Router) {
-   router.HandleFunc("GET /login/fisa", app.FISALogin)
-   router.HandleFunc("GET /callback/fisa", app.FISACallback)
+func(app *Oauth2) AddRouter(router *http.ServeMux) {
+   router.HandleFunc("GET /login/fisa", app.FISAAuthorize)
+   router.HandleFunc("GET /callback/fisa", app.FISAAuthenticate)
 }
 
 // "email,profile"
@@ -60,7 +62,7 @@ func NewOauth(server *SherryServer.Server, scopes string)(*Oauth2, error) {
    clientSecret := os.Getenv("ClientSecret")
 	redirectUri := os.Getenv("RedirectUri") // RedirectUri is the URL to redirect users going through the OAuth flow
    if endpoint == "" || clientID == "" || clientSecret == "" || redirectUri == "" || scopes == "" {
-      return nil, errors.New("Missing required parameters")
+      return nil, fmt.Errorf("Missing required parameters")
    }
    // sps := strings.Split(scopes, ",")
    return &Oauth2{
