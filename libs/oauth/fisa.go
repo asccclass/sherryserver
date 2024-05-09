@@ -17,7 +17,7 @@ import(
 func(app *Oauth2) GetFISAAccessToken(code string)([]byte, error) {
 	params := map[string]string {
 		"grant_type": "authorization_code",
-		"client_id": app.ClientId,
+		"client_id": app.ClientID,
 		"client_secret": app.ClientSecret,
 		"redirect_uri": app.RedirectUri,
 		"code": code,
