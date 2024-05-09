@@ -103,7 +103,7 @@ func NewServer(listenAddr, documentRoot, templatePath string) (*Server, error) {
       IdleTimeout:  15 * time.Second,
    }
    // 建立 Session Store
-	sessionManager = sessions.NewCookieStore([]byte("justgps@gmail.com#$&&%&&$$$$"))
+	sessionManager = sessions.NewCookieStore([]byte("$$justgps@gmail.com#$&&%&&$$$$"))
 	// 處理Original 
    orglists := NewAhoCorasick()
    methodlists := NewAhoCorasick()
