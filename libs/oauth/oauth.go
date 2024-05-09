@@ -33,8 +33,9 @@ func(app *Oauth2) State(n int) (string, error) {
 // 
 // 檢查是否有已經登入
 func(app *Oauth2) Protect(next http.Handler) http.Handler { 
-   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-      email := app.Server.SessionManager.GetString(r.Context(), "email")
+   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {// 從 request 中讀取 session
+		session := app.Server.SessionManager.Load(r.Context())
+      email := session.GetString("email")
       if email != "" {  
          code := r.URL.Query().Get("code")
          if code == "" {
