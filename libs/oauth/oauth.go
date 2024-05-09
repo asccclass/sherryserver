@@ -34,13 +34,13 @@ func(app *Oauth2) State(n int) (string, error) {
 // 檢查是否有已經登入
 func(app *Oauth2) Protect(next http.Handler) http.Handler { 
    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {// 從 request 中讀取 session
-		session, err := app.Server.SessionManager.Load(r.Context())
+		session, err := store.Get(r, "justdrink.com.tw")
       if err!= nil {
          app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
          fmt.Println(err.Error())
          return
       }
-      email := session.GetString("email")
+      // email := session.GetString("email")
       if email != "" {  
          code := r.URL.Query().Get("code")
          if code == "" {

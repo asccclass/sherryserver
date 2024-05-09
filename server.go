@@ -15,7 +15,7 @@ import(
    "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
    "github.com/joho/godotenv"
-	"github.com/alexedwards/scs/v2"
+	"github.com/gorilla/sessions"
 )
 
 type Server struct {
@@ -24,7 +24,7 @@ type Server struct {
    Server       *http.Server
    OriginAllow  *AhoCorasick
    MethodAllow  *AhoCorasick
-   SessionManager *scs.SessionManager
+   SessionManager *sessions.CookieStore
    /*
    Template     *SherryTemplate.Template
    GeoLocation  *SherryGeoLocation.SryLocation
@@ -103,9 +103,7 @@ func NewServer(listenAddr, documentRoot, templatePath string) (*Server, error) {
       IdleTimeout:  15 * time.Second,
    }
    // 建立 Session Store
-   var sessionManager *scs.SessionManager
-	sessionManager = scs.New()
-   sessionManager.Lifetime = 24 * time.Hour // 設置會話的生命周期
+	sessionManager = sessions.NewCookieStore([]byte("justgps@gmail.com#$&&%&&$$$$"))
 	// 處理Original 
    orglists := NewAhoCorasick()
    methodlists := NewAhoCorasick()
