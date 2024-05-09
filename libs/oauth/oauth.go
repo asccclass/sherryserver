@@ -64,12 +64,14 @@ func(app *Oauth2) AddRouter(router *http.ServeMux) {
 }
 
 // "email,profile"
-func NewOauth(server *SherryServer.Server, scopes string)(*Oauth2, error) {
+func NewOauth(server *SherryServer.Server) (*Oauth2, error) {
    endpoint := os.Getenv("EndPoint")
    clientID := os.Getenv("ClientID")
    clientSecret := os.Getenv("ClientSecret")
 	redirectUri := os.Getenv("RedirectUri") // RedirectUri is the URL to redirect users going through the OAuth flow
-   if endpoint == "" || clientID == "" || clientSecret == "" || redirectUri == "" || scopes == "" {
+   scope := os.Getenv("Scope")
+   tokenUrl := os.Getenv("TokenUrl")
+   if endpoint == "" || clientID == "" || clientSecret == "" || redirectUri == "" || scope == "" || tokenUrl == "" {
       return nil, fmt.Errorf("Missing required parameters")
    }
    // sps := strings.Split(scopes, ",")
@@ -79,6 +81,7 @@ func NewOauth(server *SherryServer.Server, scopes string)(*Oauth2, error) {
       ClientSecret: clientSecret,
       Endpoint: endpoint,
       RedirectUri: redirectUri,
-      Scopes: scopes,
+      Scopes: scope,
+      TokenUrl: tokenUrl,
    }, nil
 }

@@ -8,12 +8,51 @@ import(
    // "os"
 	// "io"
    "fmt"
+	"net/url"
    "net/http"
+	"io/ioutil"
 )
 
+// 取得 Access Token
+func(app *Oauth2) GetFISAAccessToken(code string)([]byte, error) {
+	params := map[string]string {
+		"grant_type": "authorization_code",
+		"client_id": app.ClientId,
+		"client_secret": app.ClientSecret,
+		"redirect_uri": app.RedirectUri,
+		"code": code,
+	}
+	query := url.Values{}
+	for key, value := range params {
+	   query.Add(key, value)
+	}
+	urlWithParams := fmt.Sprintf("%s?%s", app.TokenUrl, query.Encode())
+	response, err := http.Get(urlWithParams)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	// 讀取回應的內容
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
+}
+
+// 取得個人資料
+func(app *Oauth2) FISAGetUserInfo(w http.ResponseWriter, r *http.Request, code string) {
+   res, err := app.GetFISAAccessToken(code)
+   if err != nil {
+      fmt.Fprintf(w, "Error: %s", err)
+      return
+   }
+   fmt.Fprintf(w, "Access Token: %s", string(res))
+}
 
 // 認證完成後，回到這個網址
 func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code string) {   
+	// 取得個人資料
 	/*
 	t, err := conf.Exchange(context.Background(), code)
 	if err != nil {
