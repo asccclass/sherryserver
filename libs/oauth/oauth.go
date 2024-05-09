@@ -41,7 +41,7 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
             app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
             return
          } else {
-            app.FISAAuthenticate(w, r) // 登入成功，導向原本頁面
+            app.FISAAuthenticate(w, r, code) // 登入成功，導向原本頁面
             return
          }
          return
@@ -53,7 +53,6 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
 
 func(app *Oauth2) AddRouter(router *http.ServeMux) {
    router.HandleFunc("GET /login/fisa", app.FISAAuthorize)
-   router.HandleFunc("GET /callback/fisa", app.FISAAuthenticate)
 }
 
 // "email,profile"
