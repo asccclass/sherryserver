@@ -4,6 +4,7 @@ import(
    "os"
    "strings"
    "net/http"
+   "encoding/base64"
 	"github.com/asccclass/sherryserver"
 )
 
@@ -14,6 +15,15 @@ type Oauth2 struct {
    Endpoint [string]
    RedirectUri [string]	// RedirectURL is the URL to redirect users going through the OAuth flow
    Scopes [][string]	// Scope specifies optional requested permissions []string{"email", "profile"},
+}
+
+// state参数用於防止CSRF（Cross site attack)  傳入長度，通常32
+func(app *Oauth2) State(n int) (string, error) {
+	data := make([]byte, n)
+	if _, err := io.ReadFull(rand.Reader, data); err != nil {
+		 return "", err
+	}
+	return base64.StdEncoding.EncodeToString(data), nil
 }
 
 // http.Redirect(w, r, url, http.StatusTemporaryRedirect)

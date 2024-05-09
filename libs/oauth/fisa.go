@@ -11,13 +11,6 @@ import(
    "net/http"
 )
 
-func(app *Oauth2) State(n int) (string, error) {
-	data := make([]byte, n)
-	if _, err := io.ReadFull(rand.Reader, data); err != nil {
-		 return "", err
-	}
-	return base64.StdEncoding.EncodeToString(data), nil
-}
 
 // 認證完成後，回到這個網址
 func(app *Oauth2) FOSACallback(w http.ResponseWriter, r *http.Request) {
