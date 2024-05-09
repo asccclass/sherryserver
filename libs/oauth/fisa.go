@@ -53,6 +53,7 @@ func(app *Oauth2) FISAGetUserInfo(w http.ResponseWriter, r *http.Request, code s
 // 認證完成後，回到這個網址
 func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code string) {   
 	// 取得個人資料
+	app.FISAGetUserInfo(w, r, code)
 	/*
 	t, err := conf.Exchange(context.Background(), code)
 	if err != nil {
@@ -77,7 +78,6 @@ func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code 
 	app.SessionManager.Put(r.Context(), "email", v.Email)  // 將Email存入Session
 	http.Redirect(w, r, "/dashboard", http.StatusTemporaryRedirect)
 	*/
-	fmt.Println("code: ", code)
 }
 
 // 轉到 FISA 認證
