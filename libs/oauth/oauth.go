@@ -44,9 +44,11 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
       if !ok || email == "" {  
          code := r.URL.Query().Get("code")
          if code == "" {
+            fmt.Println("未登入，導向登入頁面")
             app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
             return
          } else {
+            fmt.Println("登入成功，導向原本頁面")
             app.FISAAuthenticate(w, r, code) // 登入成功，導向原本頁面
             return
          }

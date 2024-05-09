@@ -49,5 +49,6 @@ func(app *Oauth2) FISAAuthorize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	url := fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&response_type=code&scope=%s&state=%s", app.Endpoint, app.ClientID, app.RedirectUri, app.Scopes, state)   
+	fmt.Println("url: ", url)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
