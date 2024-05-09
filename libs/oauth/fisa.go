@@ -6,16 +6,16 @@ package Oauth
 
 import(
    // "os"
-	"io"
+	// "io"
    "fmt"
    "net/http"
 )
 
 
 // 認證完成後，回到這個網址
-func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code string) {
+func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request) {
+   code := r.URL.Query().Get("code")
 	/*
-   // code := r.URL.Query().Get("code")
 	t, err := conf.Exchange(context.Background(), code)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
