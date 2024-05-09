@@ -41,7 +41,8 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
             app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
             return
          } else {
-            app.FISAAuthenticate(w, r, code)
+            app.FISAAuthenticate(w, r) // 登入成功，導向原本頁面
+            return
          }
          return
       } else {

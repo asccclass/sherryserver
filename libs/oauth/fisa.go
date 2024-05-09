@@ -13,7 +13,7 @@ import(
 
 
 // 認證完成後，回到這個網址
-func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request) {
+func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code) {
    code := r.URL.Query().Get("code")
 	/*
 	t, err := conf.Exchange(context.Background(), code)
