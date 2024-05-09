@@ -10,11 +10,11 @@ import(
 
 type Oauth2 struct {
 	Server *sherryserver.Server   // Server is the server that this middleware is attached to.
-   ClientID [string]	// ClientID is the application's ID.
-   ClientSecret [string]// ClientSecret is the application's secret.
-   Endpoint [string]
-   RedirectUri [string]	// RedirectURL is the URL to redirect users going through the OAuth flow
-   Scopes [][string]	// Scope specifies optional requested permissions []string{"email", "profile"},
+   ClientID  string	// ClientID is the application's ID.
+   ClientSecret string// ClientSecret is the application's secret.
+   Endpoint string
+   RedirectUri string	// RedirectURL is the URL to redirect users going through the OAuth flow
+   Scopes string	// Scope specifies optional requested permissions []string{"email", "profile"},
 }
 
 // state参数用於防止CSRF（Cross site attack)  傳入長度，通常32
@@ -27,10 +27,25 @@ func(app *Oauth2) State(n int) (string, error) {
 }
 
 // http.Redirect(w, r, url, http.StatusTemporaryRedirect)
-// code := r.URL.Query().Get("code")
-func(app *Oauth2) googleHandler(w http.ResponseWriter, r *http.Request) {
-   // url := Oauth2.AuthCodeURL("state", oauth2.AccessTypeOffline)
-   // http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+// 
+// 檢查是否有已經登入
+func(app *Oauth2) Protect(next http.Handler) http.Handler { 
+   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+      session := sessionManager.Load(r.Context())
+      email := session.GetString(r.Context(), "email")
+      if email != "" {  
+         code := r.URL.Query().Get("code")
+         if code == "" {
+            app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
+            return
+         } else {
+            app.FISAAuthenticate(w, r, code)
+         }
+         return
+      } else {
+         next.ServeHTTP(w, r)
+      }
+	})
 }
 
 func(app *Oauth2) AddRouter(router *mux.Router) {
@@ -47,13 +62,13 @@ func NewOauth(server *SherryServer.Server, scopes string)(*Oauth2, error) {
    if endpoint == "" || clientID == "" || clientSecret == "" || redirectUri == "" || scopes == "" {
       return nil, errors.New("Missing required parameters")
    }
-   sps := strings.Split(scopes, ",")
+   // sps := strings.Split(scopes, ",")
    return &Oauth2{
 		Server: server,
       ClientID: clientID,
       ClientSecret: clientSecret,
-      Endpoint: "https://api.twitter.com/oauth2/token",
+      Endpoint: endpoint,
       RedirectUri: redirectUri,
-      Scopes: sps,
+      Scopes: scopes,
    }, nil
 }

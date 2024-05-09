@@ -105,6 +105,7 @@ func NewServer(listenAddr, documentRoot, templatePath string) (*Server, error) {
    // 建立 Session Store
    var sessionManager *scs.SessionManager
 	sessionManager = scs.New()
+   sessionManager.Lifetime = 24 * time.Hour // 設置會話的生命周期
 	// 處理Original 
    orglists := NewAhoCorasick()
    methodlists := NewAhoCorasick()
