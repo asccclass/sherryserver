@@ -10,7 +10,7 @@ import(
    "fmt"
 	"net/url"
    "net/http"
-	"io/ioutil"
+	// "io/ioutil"
 	"encoding/json"
 )
 
@@ -25,18 +25,18 @@ type AccessToken struct {
 }
 
 // Step 0. Url Fetch
-func(app *Oauth2) UrlFetch(url, params map[string]string)([]byte, error) {
+func(app *Oauth2) UrlFetch(urlz string, params map[string]string)([]byte, error) {
 	query := url.Values{}
 	for key, value := range params {
 	   query.Add(key, value)
 	}
-	urlWithParams := fmt.Sprintf("%s?%s", app.TokenUrl, query.Encode())
+	urlWithParams := fmt.Sprintf("%s?%s", urlz, query.Encode())
 	response, err := http.Get(urlWithParams)
 	if err != nil {
 		return nil, err
 	}
 	defer response.Body.Close()
-	return body, nil
+	return response.Body, nil
 
 }
 
@@ -95,7 +95,8 @@ func(app *Oauth2) FISAGetUserInfoViaCode(code string)(error) {
 	if err != nil {
 		return err
 	}
-   fmt.Fprintf(w, "User Info: %s ", string(res))
+   fmt.Fprintf("User Info: %s ", string(res))
+	return nil
 }
 
 // 認證完成後，回到這個網址
