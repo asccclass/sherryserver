@@ -20,6 +20,7 @@ type Oauth2 struct {
    Scopes string	// Scope specifies optional requested permissions []string{"email", "profile"},
    TokenUrl string	// TokenURL is the URL to request a token.
    UserUrl string	// UserURL is the URL to request user information. 
+   JwtKey string	// JwtKey is the key to use to sign the JWT.
 }
 
 // state参数用於防止CSRF（Cross site attack)  傳入長度，通常32
@@ -32,14 +33,14 @@ func(app *Oauth2) State(n int) (string, error) {
 }
 
 // http.Redirect(w, r, url, http.StatusTemporaryRedirect)
-// 
+// Access Token: {"ErrorCode":"invalid_request","Error":"Authorization Code expired"}
+// Access Token: {"ErrorCode":"invalid_request","Error":"Authorization Code revoked"}
 // 檢查是否有已經登入
 func(app *Oauth2) Protect(next http.Handler) http.Handler { 
    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {// 從 request 中讀取 session
 		session, err := app.Server.SessionManager.Get(r, "fisaOauth")
-      if err!= nil {
+      if err != nil {
          app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
-         fmt.Println(err.Error())
          return
       }
       email, ok := session.Values["email"].(string)
@@ -61,6 +62,47 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
 	})
 }
 
+/*
+// 從請求中獲取 JWT
+
+
+claims := token.Claims.(jwt.MapClaims)
+    tokenString := r.Header.Get("Authorization")
+    if tokenString == "" {
+        http.Error(w, "JWT missing in request header", http.StatusBadRequest)
+        return
+    }
+
+    // 解析 JWT
+    token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+        // 驗證 JWT
+        if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+            return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+        }
+        return jwtKey, nil
+    })
+
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusUnauthorized)
+        return
+    }
+
+    // 驗證 JWT 是否有效
+    if !token.Valid {
+        http.Error(w, "Invalid JWT", http.StatusUnauthorized)
+        return
+    }
+
+    // 如果 JWT 有效，從 claims 中獲取用戶名
+    if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+        data := claims["data"].(map[string]interface{})
+        name := data["name"].(string)
+        fmt.Fprintf(w, "Welcome %s!", username)
+    } else {
+        http.Error(w, "Failed to get username from JWT", http.StatusInternalServerError)
+    }
+*/    
+
 func(app *Oauth2) AddRouter(router *http.ServeMux) {
    router.HandleFunc("GET /login/fisa", app.FISAAuthorize)
 }
@@ -74,7 +116,8 @@ func NewOauth(server *SherryServer.Server) (*Oauth2, error) {
    scope := os.Getenv("Scope")
    tokenUrl := os.Getenv("TokenUrl")
    userUrl := os.Getenv("UserUrl")
-   if endpoint == "" || clientID == "" || clientSecret == "" || redirectUri == "" || scope == "" || tokenUrl == "" || userUrl == "" {
+   jwtKey := os.Getenv("JwtKey")
+   if endpoint == "" || clientID == "" || clientSecret == "" || redirectUri == "" || scope == "" || tokenUrl == "" || userUrl == "" || jwtKey == "" {
       return nil, fmt.Errorf("Missing required parameters")
    }
    // sps := strings.Split(scopes, ",")
@@ -87,5 +130,6 @@ func NewOauth(server *SherryServer.Server) (*Oauth2, error) {
       Scopes: scope,
       TokenUrl: tokenUrl,
       UserUrl: userUrl,
+      JwtKey: jwtKey,
    }, nil
 }

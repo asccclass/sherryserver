@@ -8,10 +8,13 @@ import(
    // "os"
 	// "io"
    "fmt"
+	"time"
 	"net/url"
    "net/http"
 	"io/ioutil"
 	"encoding/json"
+	"github.com/gorilla/sessions"
+	"github.com/dgrijalva/jwt-go"
 )
 
 type AccessToken struct {	
@@ -22,6 +25,16 @@ type AccessToken struct {
 	RefreshToken string `json:"refresh_token"` 
 	Error string `json:"error"`
 	ErrorDescription string `json:"error_description"`
+}
+
+// "cn":"andyliu","chName":"OOO","phone":"02-27899963","email":"andyliu@gate.sinica.edu.tw","instCode":"24","sysid":"119511"}
+type FISAUserInfo {
+	Cn string `json:"cn"`
+	ChName string `json:"chName"`
+	Phone string `json:"phone"`
+	Email string `json:"email"`
+	InstCode string `json:"instCode"`
+	Sysid string `json:"sysid"`
 }
 
 // Step 0. Url Fetch
@@ -65,8 +78,8 @@ func(app *Oauth2) GetFISAAccessToken(code string)(*AccessToken, error) {
 	return &accessToken, nil
 }
 
-// 取得個人資料
-func(app *Oauth2) GetFISAUserInfo(accessToken string) ([]byte, error) {
+// 取得個人資料 via accessToken
+func(app *Oauth2) GetFISAUserInfo(accessToken string) (*FISAUserInfo, error) {
 	params := map[string]string {
 		"access_token": accessToken,
 		// "fields": "id,name,email,gender,birthday,phone,address,postcode,city,country,avatar,created_at,updated_at",
@@ -76,60 +89,57 @@ func(app *Oauth2) GetFISAUserInfo(accessToken string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-/*	
-	var accessToken AccessToken
-	if err := json.Unmarshal(body, &accessToken); err != nil {
+   
+	var userInfo FISAUserInfo
+	if err := json.Unmarshal(body, &userInfo); err != nil {
 		return nil, err
 	}
-*/
-	return body, nil
+	return userInfo, nil
 }
 
 // 取得個人資料 from web's code
-func(app *Oauth2) FISAGetUserInfoViaCode(code string)(error) {
+func(app *Oauth2) FISAGetUserInfoViaCode(code string)(*FISAUserInfo, error) {
    accessToken, err := app.GetFISAAccessToken(code)   // 先取得 Access Token
    if err != nil {
       return err
-   }
+   }	
 	if accessToken.AccessToken == "" {
 		return fmt.Errorf("Error: Access Token is empty")
 	}
-	res, err := app.GetFISAUserInfo(accessToken.AccessToken)
-	if err != nil {
-		return err
-	}
-   fmt.Println(string(res))
-	return nil
+	return app.GetFISAUserInfo(accessToken.AccessToken)
 }
 
 // 認證完成後，回到這個網址
 func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code string) {   
-	// 取得個人資料
-	err := app.FISAGetUserInfoViaCode(code)
+	userinfo, err := app.FISAGetUserInfoViaCode(code)  // 取得個人資料
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	/*
-	t, err := conf.Exchange(context.Background(), code)
-	client := conf.Client(context.Background(), t)
-
-	// 取得使用者資訊
-	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
+	session, err := app.Server.SessionManager.Get(r, "fisaOauth")
 	if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	defer resp.Body.Close()
-   var v any
-	// Reading the JSON body using JSON decoder
-	if err := json.NewDecoder(resp.Body).Decode(&v); err!= nil {
-	   http.Error(w, err.Error(), http.StatusInternalServerError)
-	   return
+	session.Values["email"] = userinfo.Email   // 將Email存入Session
+	if err := session.Save(r, w); err!= nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	app.SessionManager.Put(r.Context(), "email", v.Email)  // 將Email存入Session
-	http.Redirect(w, r, "/dashboard", http.StatusTemporaryRedirect)
-	*/
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
+	claims["data"] = userinfo
+	tokenString, err := token.SignedString(app.JwtKey) // 簽名 JWT
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+  }
+  // 將 JWT 寫入 HTTP 標頭
+  w.Header().Set("Authorization", "Bearer " + tokenString)
+  w.WriteHeader(http.StatusOK)
+
+	// http.Redirect(w, r, "/dashboard", http.StatusTemporaryRedirect)
 }
 
 // 轉到 FISA 認證
