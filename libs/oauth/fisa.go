@@ -13,7 +13,6 @@ import(
    "net/http"
 	"io/ioutil"
 	"encoding/json"
-	"github.com/gorilla/sessions"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -94,17 +93,17 @@ func(app *Oauth2) GetFISAUserInfo(accessToken string) (*FISAUserInfo, error) {
 	if err := json.Unmarshal(body, &userInfo); err != nil {
 		return nil, err
 	}
-	return userInfo, nil
+	return &userInfo, nil
 }
 
 // 取得個人資料 from web's code
 func(app *Oauth2) FISAGetUserInfoViaCode(code string)(*FISAUserInfo, error) {
    accessToken, err := app.GetFISAAccessToken(code)   // 先取得 Access Token
    if err != nil {
-      return err
+      return nil, err
    }	
 	if accessToken.AccessToken == "" {
-		return fmt.Errorf("Error: Access Token is empty")
+		return nil, fmt.Errorf("Error: Access Token is empty")
 	}
 	return app.GetFISAUserInfo(accessToken.AccessToken)
 }
