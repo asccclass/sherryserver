@@ -8,6 +8,7 @@ import(
    "net/http"
    "crypto/rand"
    "encoding/base64"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/asccclass/sherryserver"
 )
 
@@ -34,7 +35,7 @@ func(app *Oauth2) State(n int) (string, error) {
 
 // 取得個人資料 from Authorization Code
 func(app *Oauth2) GetUserInfoFromJWT(tokenString string) (map[string]interface{}, error) {
-   userinfo := map[string]interface{}
+   userinfo := make(map[string]interface{})
    token, err := app.GetJWTToken(tokenString)
    if err!= nil {
       return userinfo, err
@@ -56,7 +57,7 @@ func(app *Oauth2) GetJWTToken(tokenString string) (*jwt.Token, error) {
       if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {  // 驗證 JWT
          return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
       }
-      return jwtKey, nil
+      return app.JwtKey, nil
    })
    if err != nil {
       return nil, fmt.Errorf("JWT missing in request header")
@@ -65,7 +66,7 @@ func(app *Oauth2) GetJWTToken(tokenString string) (*jwt.Token, error) {
    if !token.Valid {
       return nil, fmt.Errorf("Invalid JWT")
    }
-   if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+   if _, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
       return token, nil
    } 
    return nil, fmt.Errorf("Failed to get username from JWT")   
@@ -105,7 +106,7 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
          }
          return
       } else {
-         if err := app.CheckJWT(r); err != nil {
+         if err := app.IsValidJWT(r); err != nil {
             app.FISAAuthorize(w, r)    // JWT 失效，導向登入頁面
             return
          }
