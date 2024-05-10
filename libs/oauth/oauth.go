@@ -73,13 +73,21 @@ func(app *Oauth2) GetJWTToken(tokenString string) (*jwt.Token, error) {
 }
 
 func(app *Oauth2) IsValidJWT(r *http.Request) (error) {
-   _, err := app.GetJWTToken(r.Header.Get("Authorization"))
+   s := strings.Split(r.Header.Get("Authorization"), " ")
+   if len(s)!= 2 || s[0] != "Bearer" {
+      return fmt.Errorf("Invalid Authorization header")
+   }
+   _, err := app.GetJWTToken(s)
    return err
 }
 
 // 從 r 取得個人資料
 func(app *Oauth2) GetUserInfoFromRequest(r *http.Request) (map[string]interface{}, error) {
-   return app.GetJWTToken(r.Header.Get("Authorization"))
+   s := strings.Split(r.Header.Get("Authorization"), " ")
+   if len(s)!= 2 || s[0] != "Bearer" {
+      return nil, fmt.Errorf("Invalid Authorization header")
+   }
+   return app.GetJWTToken(s[1])
 }
 
 // http.Redirect(w, r, url, http.StatusTemporaryRedirect)
