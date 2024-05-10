@@ -19,7 +19,7 @@ type AccessToken struct {
 	TokenType string `json:"token_type"`
 	ExpiresIn int `json:"expires_in"`
 	Scope string `json:"scope"`
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `json:"refresh_token"` 
 	Error string `json:"error"`
 	ErrorDescription string `json:"error_description"`
 }
