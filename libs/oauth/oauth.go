@@ -19,6 +19,7 @@ type Oauth2 struct {
    RedirectUri string	// RedirectURL is the URL to redirect users going through the OAuth flow
    Scopes string	// Scope specifies optional requested permissions []string{"email", "profile"},
    TokenUrl string	// TokenURL is the URL to request a token.
+   UserUrl string	// UserURL is the URL to request user information.
 }
 
 // state参数用於防止CSRF（Cross site attack)  傳入長度，通常32
@@ -72,7 +73,8 @@ func NewOauth(server *SherryServer.Server) (*Oauth2, error) {
 	redirectUri := os.Getenv("RedirectUri") // RedirectUri is the URL to redirect users going through the OAuth flow
    scope := os.Getenv("Scope")
    tokenUrl := os.Getenv("TokenUrl")
-   if endpoint == "" || clientID == "" || clientSecret == "" || redirectUri == "" || scope == "" || tokenUrl == "" {
+   userUrl := os.Getenv("UserUrl")
+   if endpoint == "" || clientID == "" || clientSecret == "" || redirectUri == "" || scope == "" || tokenUrl == "" || userUrl == "" {
       return nil, fmt.Errorf("Missing required parameters")
    }
    // sps := strings.Split(scopes, ",")
@@ -84,5 +86,6 @@ func NewOauth(server *SherryServer.Server) (*Oauth2, error) {
       RedirectUri: redirectUri,
       Scopes: scope,
       TokenUrl: tokenUrl,
+      UserUrl: userUrl,
    }, nil
 }

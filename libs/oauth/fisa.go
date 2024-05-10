@@ -11,17 +11,21 @@ import(
 	"net/url"
    "net/http"
 	"io/ioutil"
+	"encoding/json"
 )
 
-// 取得 Access Token
-func(app *Oauth2) GetFISAAccessToken(code string)([]byte, error) {
-	params := map[string]string {
-		"grant_type": "authorization_code",
-		"client_id": app.ClientID,
-		"client_secret": app.ClientSecret,
-		"redirect_uri": app.RedirectUri,
-		"code": code,
-	}
+type AccessToken struct {	
+	AccessToken string `json:"access_token"`
+	TokenType string `json:"token_type"`
+	ExpiresIn int `json:"expires_in"`
+	Scope string `json:"scope"`
+	RefreshToken string `json:"refresh_token"`
+	Error string `json:"error"`
+	ErrorDescription string `json:"error_description"`
+}
+
+// Step 0. Url Fetch
+func(app *Oauth2) UrlFetch(url, params map[string]string)([]byte, error) {
 	query := url.Values{}
 	for key, value := range params {
 	   query.Add(key, value)
@@ -32,34 +36,78 @@ func(app *Oauth2) GetFISAAccessToken(code string)([]byte, error) {
 		return nil, err
 	}
 	defer response.Body.Close()
+	return body, nil
+
+}
+
+// Step 1. 取得 Access Token
+func(app *Oauth2) GetFISAAccessToken(code string)(*AccessToken, error) {
+	params := map[string]string {
+		"grant_type": "authorization_code",
+		"client_id": app.ClientID,
+		"client_secret": app.ClientSecret,
+		"redirect_uri": app.RedirectUri,
+		"code": code,
+	}
 	// 讀取回應的內容
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := app.UrlFetch(app.TokenUrl, params)
 	if err != nil {
 		return nil, err
 	}
-	return body, nil
+	var accessToken AccessToken
+	if err := json.Unmarshal(body, &accessToken); err != nil {
+		return nil, err
+	}
+	return &accessToken, nil
 }
 
 // 取得個人資料
-func(app *Oauth2) FISAGetUserInfo(w http.ResponseWriter, r *http.Request, code string) {
-   res, err := app.GetFISAAccessToken(code)
+func(app *Oauth2) GetFISAUserInfo(accessToken string) ([]byte, error) {
+	params := map[string]string {
+		"access_token": accessToken,
+		// "fields": "id,name,email,gender,birthday,phone,address,postcode,city,country,avatar,created_at,updated_at",
+	}
+	// 讀取回應的內容
+	body, err := app.UrlFetch(app.UserURL, params)
+	if err != nil {
+		return nil, err
+	}
+/*	
+	var accessToken AccessToken
+	if err := json.Unmarshal(body, &accessToken); err != nil {
+		return nil, err
+	}
+*/
+
+	return body, nil
+}
+
+// 取得個人資料 from web's code
+func(app *Oauth2) FISAGetUserInfoViaCode(code string)(error) {
+   accessToken, err := app.GetFISAAccessToken(code)
    if err != nil {
-      fmt.Fprintf(w, "Error: %s", err)
-      return
+      return err
    }
-   fmt.Fprintf(w, "Access Token: %s", string(res))
+	if accessToken.AccessToken == "" {
+		return fmt.Errorf("Error: Access Token is empty")
+	}
+	res, err := app.GetFISAUserInfo(accessToken.AccessToken)
+	if err != nil {
+		return err
+	}
+   fmt.Fprintf(w, "User Info: %s", string(res))
 }
 
 // 認證完成後，回到這個網址
 func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code string) {   
 	// 取得個人資料
-	app.FISAGetUserInfo(w, r, code)
-	/*
-	t, err := conf.Exchange(context.Background(), code)
+	err := app.FISAGetUserInfoViaCode(code)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	/*
+	t, err := conf.Exchange(context.Background(), code)
 	client := conf.Client(context.Background(), t)
 
 	// 取得使用者資訊
