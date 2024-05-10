@@ -10,7 +10,7 @@ import(
    "fmt"
 	"net/url"
    "net/http"
-	// "io/ioutil"
+	"io/ioutil"
 	"encoding/json"
 )
 
@@ -36,7 +36,12 @@ func(app *Oauth2) UrlFetch(urlz string, params map[string]string)([]byte, error)
 		return nil, err
 	}
 	defer response.Body.Close()
-	return response.Body, nil
+	// 讀取回應的內容
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
 
 }
 
@@ -68,7 +73,7 @@ func(app *Oauth2) GetFISAUserInfo(accessToken string) ([]byte, error) {
 		// "fields": "id,name,email,gender,birthday,phone,address,postcode,city,country,avatar,created_at,updated_at",
 	}
 	// 讀取回應的內容
-	body, err := app.UrlFetch(app.UserURL, params)
+	body, err := app.UrlFetch(app.UserUrl, params)
 	if err != nil {
 		return nil, err
 	}
