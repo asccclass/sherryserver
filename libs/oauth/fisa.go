@@ -95,7 +95,7 @@ func(app *Oauth2) FISAGetUserInfoViaCode(code string)(error) {
 	if err != nil {
 		return err
 	}
-   fmt.Fprintf(w, "User Info: %s", string(res))
+   fmt.Fprintf(w, "User Info: %s ", string(res))
 }
 
 // 認證完成後，回到這個網址
