@@ -28,7 +28,7 @@ type AccessToken struct {
 }
 
 // "cn":"andyliu","chName":"OOO","phone":"02-27899963","email":"andyliu@gate.sinica.edu.tw","instCode":"24","sysid":"119511"}
-type FISAUserInfo {
+type FISAUserInfo struct {
 	Cn string `json:"cn"`
 	ChName string `json:"chName"`
 	Phone string `json:"phone"`
