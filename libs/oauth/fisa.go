@@ -42,7 +42,6 @@ func(app *Oauth2) UrlFetch(urlz string, params map[string]string)([]byte, error)
 		return nil, err
 	}
 	return body, nil
-
 }
 
 // Step 1. 取得 Access Token
@@ -83,13 +82,12 @@ func(app *Oauth2) GetFISAUserInfo(accessToken string) ([]byte, error) {
 		return nil, err
 	}
 */
-
 	return body, nil
 }
 
 // 取得個人資料 from web's code
 func(app *Oauth2) FISAGetUserInfoViaCode(code string)(error) {
-   accessToken, err := app.GetFISAAccessToken(code)
+   accessToken, err := app.GetFISAAccessToken(code)   // 先取得 Access Token
    if err != nil {
       return err
    }
@@ -100,7 +98,7 @@ func(app *Oauth2) FISAGetUserInfoViaCode(code string)(error) {
 	if err != nil {
 		return err
 	}
-   fmt.Fprintf("User Info: %s ", string(res))
+   fmt.Println(string(res))
 	return nil
 }
 
