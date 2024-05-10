@@ -32,6 +32,55 @@ func(app *Oauth2) State(n int) (string, error) {
 	return base64.StdEncoding.EncodeToString(data), nil
 }
 
+// 取得個人資料 from Authorization Code
+func(app *Oauth2) GetUserInfoFromJWT(tokenString string) (map[string]interface{}, error) {
+   userinfo := map[string]interface{}
+   token, err := app.GetJWTToken(tokenString)
+   if err!= nil {
+      return userinfo, err
+   }
+   claims, ok := token.Claims.(jwt.MapClaims)
+   if !ok || !token.Valid {
+      return userinfo, err
+   }
+   userinfo = claims["data"].(map[string]interface{})
+   // name := data["name"].(string)
+   return userinfo, nil
+}
+
+func(app *Oauth2) GetJWTToken(tokenString string) (*jwt.Token, error) {
+   if tokenString == "" {
+      return nil, fmt.Errorf("JWT missing in request header")
+   }
+   token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {  // 解析 JWT
+      if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {  // 驗證 JWT
+         return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+      }
+      return jwtKey, nil
+   })
+   if err != nil {
+      return nil, fmt.Errorf("JWT missing in request header")
+   }
+   // 驗證 JWT 是否有效
+   if !token.Valid {
+      return nil, fmt.Errorf("Invalid JWT")
+   }
+   if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+      return token, nil
+   } 
+   return nil, fmt.Errorf("Failed to get username from JWT")   
+}
+
+func(app *Oauth2) IsValidJWT(r *http.Request) (error) {
+   _, err := app.GetJWTToken(r.Header.Get("Authorization"))
+   return err
+}
+
+// 從 r 取得個人資料
+func(app *Oauth2) GetUserInfoFromRequest(r *http.Request) (map[string]interface{}, error) {
+   return app.GetJWTToken(r.Header.Get("Authorization"))
+}
+
 // http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 // Access Token: {"ErrorCode":"invalid_request","Error":"Authorization Code expired"}
 // Access Token: {"ErrorCode":"invalid_request","Error":"Authorization Code revoked"}
@@ -47,62 +96,26 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
       if !ok || email == "" {  
          code := r.URL.Query().Get("code")
          if code == "" {
-            fmt.Println("未登入，導向登入頁面")
             app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
             return
          } else {
             fmt.Println("登入成功，導向原本頁面")
             app.FISAAuthenticate(w, r, code) // 登入成功，導向原本頁面
-            return
+            next.ServeHTTP(w, r)
          }
          return
       } else {
+         if err := app.CheckJWT(r); err != nil {
+            app.FISAAuthorize(w, r)    // JWT 失效，導向登入頁面
+            return
+         }
+         fmt.Println("已經登入，導向原本頁面")
          next.ServeHTTP(w, r)
       }
 	})
 }
 
-/*
-// 從請求中獲取 JWT
-
-
-claims := token.Claims.(jwt.MapClaims)
-    tokenString := r.Header.Get("Authorization")
-    if tokenString == "" {
-        http.Error(w, "JWT missing in request header", http.StatusBadRequest)
-        return
-    }
-
-    // 解析 JWT
-    token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-        // 驗證 JWT
-        if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-            return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-        }
-        return jwtKey, nil
-    })
-
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusUnauthorized)
-        return
-    }
-
-    // 驗證 JWT 是否有效
-    if !token.Valid {
-        http.Error(w, "Invalid JWT", http.StatusUnauthorized)
-        return
-    }
-
-    // 如果 JWT 有效，從 claims 中獲取用戶名
-    if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-        data := claims["data"].(map[string]interface{})
-        name := data["name"].(string)
-        fmt.Fprintf(w, "Welcome %s!", username)
-    } else {
-        http.Error(w, "Failed to get username from JWT", http.StatusInternalServerError)
-    }
-*/    
-
+// Router 
 func(app *Oauth2) AddRouter(router *http.ServeMux) {
    router.HandleFunc("GET /login/fisa", app.FISAAuthorize)
 }

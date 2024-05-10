@@ -109,21 +109,18 @@ func(app *Oauth2) FISAGetUserInfoViaCode(code string)(*FISAUserInfo, error) {
 }
 
 // 認證完成後，回到這個網址
-func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code string) {   
+func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code string)(error) {   
 	userinfo, err := app.FISAGetUserInfoViaCode(code)  // 取得個人資料
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return err
 	}
 	session, err := app.Server.SessionManager.Get(r, "fisaOauth")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return err
 	}
 	session.Values["email"] = userinfo.Email   // 將Email存入Session
 	if err := session.Save(r, w); err!= nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return err
 	}
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
@@ -131,14 +128,11 @@ func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code 
 	claims["data"] = userinfo
 	tokenString, err := token.SignedString(app.JwtKey) // 簽名 JWT
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
   }
   // 將 JWT 寫入 HTTP 標頭
   w.Header().Set("Authorization", "Bearer " + tokenString)
-  w.WriteHeader(http.StatusOK)
-
-	// http.Redirect(w, r, "/dashboard", http.StatusTemporaryRedirect)
+  return nil
 }
 
 // 轉到 FISA 認證
