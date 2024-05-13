@@ -110,7 +110,7 @@ func(app *Oauth2) FISAGetUserInfoViaCode(code string)(*FISAUserInfo, error) {
 }
 
 // Protect 認證完成後，回到這個網址
-func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code string)(r *http.Request, error) {
+func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code string)(*http.Request, error) {
 	userinfo, err := app.FISAGetUserInfoViaCode(code)  // 取得個人資料
 	if err != nil {
 		return r, fmt.Errorf("Get User info via code Error: %s", err.Error())
