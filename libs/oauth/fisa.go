@@ -128,7 +128,7 @@ func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code 
 	claims := token.Claims.(jwt.MapClaims)
 	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 	claims["data"] = userinfo
-	tokenString, err := token.SignedString(app.JwtKey) // 簽名 JWT
+	tokenString, err := token.SignedString([]byte(app.JwtKey)) // 簽名 JWT
 	if err != nil {
 		return err
   }
