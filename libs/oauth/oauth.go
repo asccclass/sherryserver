@@ -99,6 +99,7 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
 		session, err := app.Server.SessionManager.Get(r, "fisaOauth")
       fmt.Println("Protect proces", err)
       if err != nil {
+         fmt.Println("未登入，導向登入頁面")
          app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
          return
       }
@@ -106,6 +107,7 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
       if !ok || email == "" {  
          code := r.URL.Query().Get("code")
          if code == "" {
+            fmt.Println("未取得Code")
             app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
             return
          } else {
