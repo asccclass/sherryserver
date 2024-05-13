@@ -97,13 +97,13 @@ func(app *Oauth2) GetUserInfoFromRequest(r *http.Request) (map[string]interface{
 func(app *Oauth2) Protect(next http.Handler) http.Handler { 
    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {// 從 request 中讀取 session
 		session, err := app.Server.SessionManager.Get(r, "fisaOauth")
-      fmt.Println("Protect proces", err)
       if err != nil {
          fmt.Println("未登入，導向登入頁面")
          app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
          return
       }
       email, ok := session.Values["email"].(string)
+      fmt.Println("Protect proces2: ", email, ok)
       if !ok || email == "" {  
          code := r.URL.Query().Get("code")
          if code == "" {
