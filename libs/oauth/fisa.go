@@ -110,8 +110,7 @@ func(app *Oauth2) FISAGetUserInfoViaCode(code string)(*FISAUserInfo, error) {
 }
 
 // 認證完成後，回到這個網址
-func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code string)(error) {   
-	fmt.Println(code)
+func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code string)(error) {   	f
 	userinfo, err := app.FISAGetUserInfoViaCode(code)  // 取得個人資料
 	if err != nil {
 		return err
@@ -133,6 +132,7 @@ func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code 
 		return err
   }
   // 將 JWT 寫入 HTTP 標頭
+  fmt.Println("Bearer", tokenString)
   w.Header().Set("Authorization", "Bearer " + tokenString)
   return nil
 }
