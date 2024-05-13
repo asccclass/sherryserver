@@ -115,19 +115,18 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
          } else {
             fmt.Println("登入成功，導向原本頁面")
             if err := app.FISAAuthenticate(w, r, code); err != nil { // 登入成功，導向原本頁面
-               fmt.Println("登入成功，但 FISAAuthenticate 失敗", err.Error())
+               fmt.Println("登入成功，但 FISAAuthenticate 失敗:", err.Error())
                return
             }
             next.ServeHTTP(w, r)
          }
-         return
       } else {
          if err := app.IsValidJWT(r); err != nil {
             fmt.Println("JWT 失效，導向登入頁面", err.Error())
             app.FISAAuthorize(w, r)    // JWT 失效，導向登入頁面
             return
          }
-         fmt.Println("已經登入，導向原本頁面")
+         fmt.Println(email + "已經登入，進入Home Page頁面")
          next.ServeHTTP(w, r)
       }
 	})
