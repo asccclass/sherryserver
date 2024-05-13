@@ -13,7 +13,7 @@ import(
    "net/http"
 	"io/ioutil"
 	"encoding/json"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type AccessToken struct {	
