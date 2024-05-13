@@ -4,11 +4,11 @@ import(
    "io"
    "os"
    "fmt"
-   //"strings"
+   "strings"
    "net/http"
    "crypto/rand"
    "encoding/base64"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/asccclass/sherryserver"
 )
 
@@ -84,10 +84,10 @@ func(app *Oauth2) IsValidJWT(r *http.Request) (error) {
 // 從 r 取得個人資料
 func(app *Oauth2) GetUserInfoFromRequest(r *http.Request) (map[string]interface{}, error) {
    s := strings.Split(r.Header.Get("Authorization"), " ")
-   if len(s)!= 2 || s[0] != "Bearer" {
+   if len(s) != 2 || s[0] != "Bearer" {
       return nil, fmt.Errorf("Invalid Authorization header")
    }
-   return app.GetJWTToken(s[1])
+   return app.GetUserInfoFromJWT(s[1])
 }
 
 // http.Redirect(w, r, url, http.StatusTemporaryRedirect)
