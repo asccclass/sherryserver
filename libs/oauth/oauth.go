@@ -103,7 +103,6 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
          return
       }
       email, ok := session.Values["email"].(string)
-      fmt.Println("Protect proces2: ", email, ok)
       if !ok || email == "" {  
          code := r.URL.Query().Get("code")
          if code == "" {
@@ -118,6 +117,7 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
          return
       } else {
          if err := app.IsValidJWT(r); err != nil {
+            fmt.Println("JWT 失效，導向登入頁面", err.Error())
             app.FISAAuthorize(w, r)    // JWT 失效，導向登入頁面
             return
          }
