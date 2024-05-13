@@ -133,7 +133,7 @@ func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code 
   }
   // 將 JWT 寫入 HTTP 標頭
   fmt.Println("Bearer", tokenString)
-  w.Header().Set("Authorization", "Bearer " + tokenString)
+  w.Header().Add("Authorization", "Bearer " + tokenString)
   return nil
 }
 
