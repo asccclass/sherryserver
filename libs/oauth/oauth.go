@@ -97,6 +97,7 @@ func(app *Oauth2) GetUserInfoFromRequest(r *http.Request) (map[string]interface{
 func(app *Oauth2) Protect(next http.Handler) http.Handler { 
    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {// 從 request 中讀取 session
 		session, err := app.Server.SessionManager.Get(r, "fisaOauth")
+      fmt.Println("Protect proces", err)
       if err != nil {
          app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
          return
