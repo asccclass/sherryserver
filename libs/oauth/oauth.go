@@ -51,7 +51,7 @@ func(app *Oauth2) GetUserInfoFromJWT(tokenString string) (map[string]interface{}
 
 func(app *Oauth2) GetJWTToken(tokenString string) (*jwt.Token, error) {
    if tokenString == "" {
-      return nil, fmt.Errorf("JWT missing in request header")
+      return nil, fmt.Errorf("No token string")
    }
    token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {  // 解析 JWT
       if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {  // 驗證 JWT
@@ -60,7 +60,7 @@ func(app *Oauth2) GetJWTToken(tokenString string) (*jwt.Token, error) {
       return app.JwtKey, nil
    })
    if err != nil {
-      return nil, fmt.Errorf("JWT missing in request header")
+      return nil, err
    }
    // 驗證 JWT 是否有效
    if !token.Valid {
