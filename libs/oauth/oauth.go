@@ -21,7 +21,7 @@ type Oauth2 struct {
    Scopes string	// Scope specifies optional requested permissions []string{"email", "profile"},
    TokenUrl string	// TokenURL is the URL to request a token.
    UserUrl string	// UserURL is the URL to request user information. 
-   JwtKey []byte	// JwtKey is the key to use to sign the JWT.
+   JwtKey string	// JwtKey is the key to use to sign the JWT.
 }
 
 // state参数用於防止CSRF（Cross site attack)  傳入長度，通常32
@@ -57,7 +57,7 @@ func(app *Oauth2) GetJWTToken(tokenString string) (*jwt.Token, error) {
       if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {  // 驗證 JWT
          return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
       }
-      return app.JwtKey, nil
+      return []byte(app.JwtKey), nil
    })
    if err != nil {
       return nil, err
@@ -161,6 +161,6 @@ func NewOauth(server *SherryServer.Server) (*Oauth2, error) {
       Scopes: scope,
       TokenUrl: tokenUrl,
       UserUrl: userUrl,
-      JwtKey: []byte(jwtKey),
+      JwtKey: jwtKey,
    }, nil
 }
