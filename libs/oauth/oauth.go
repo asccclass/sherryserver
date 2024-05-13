@@ -77,7 +77,7 @@ func(app *Oauth2) IsValidJWT(r *http.Request) (error) {
    if len(s)!= 2 || s[0] != "Bearer" {
       return fmt.Errorf("Invalid Authorization header")
    }
-   _, err := app.GetJWTToken(s)
+   _, err := app.GetJWTToken(s[1])
    return err
 }
 
