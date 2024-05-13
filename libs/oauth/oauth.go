@@ -161,6 +161,6 @@ func NewOauth(server *SherryServer.Server) (*Oauth2, error) {
       Scopes: scope,
       TokenUrl: tokenUrl,
       UserUrl: userUrl,
-      JwtKey: byte(jwtKey),
+      JwtKey: []byte(jwtKey),
    }, nil
 }
