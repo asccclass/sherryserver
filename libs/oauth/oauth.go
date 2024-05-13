@@ -73,8 +73,12 @@ func(app *Oauth2) GetJWTToken(tokenString string) (*jwt.Token, error) {
 }
 
 func(app *Oauth2) IsValidJWT(r *http.Request) (error) {
-   s := strings.Split(r.Header.Get("Authorization"), " ")
-   if len(s)!= 2 || s[0] != "Bearer" {
+   str := r.Header.Get("Authorization")
+   if str == "" {
+      return fmt.Errorf("JWT missing in request header")
+   }
+   s := strings.Split(str, " ")
+   if len(s) != 2 || s[0] != "Bearer" {
       return fmt.Errorf("Invalid Authorization header")
    }
    _, err := app.GetJWTToken(s[1])
@@ -106,7 +110,6 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
       if !ok || email == "" {  
          code := r.URL.Query().Get("code")
          if code == "" {
-            fmt.Println("未取得Code")
             app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
             return
          } else {
