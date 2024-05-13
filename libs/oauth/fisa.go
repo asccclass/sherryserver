@@ -105,11 +105,13 @@ func(app *Oauth2) FISAGetUserInfoViaCode(code string)(*FISAUserInfo, error) {
 	if accessToken.AccessToken == "" {
 		return nil, fmt.Errorf("Error: Access Token is empty")
 	}
+	fmt.Println(accessToken)
 	return app.GetFISAUserInfo(accessToken.AccessToken)
 }
 
 // 認證完成後，回到這個網址
 func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code string)(error) {   
+	fmt.Println(code)
 	userinfo, err := app.FISAGetUserInfoViaCode(code)  // 取得個人資料
 	if err != nil {
 		return err
