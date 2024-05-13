@@ -21,7 +21,7 @@ type Oauth2 struct {
    Scopes string	// Scope specifies optional requested permissions []string{"email", "profile"},
    TokenUrl string	// TokenURL is the URL to request a token.
    UserUrl string	// UserURL is the URL to request user information. 
-   JwtKey string	// JwtKey is the key to use to sign the JWT.
+   JwtKey []byte	// JwtKey is the key to use to sign the JWT.
 }
 
 // state参数用於防止CSRF（Cross site attack)  傳入長度，通常32
@@ -106,7 +106,7 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
          app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
          return
       }
-      email, ok := session.Values["email"].(string)
+      email, ok := session.Values["email"].(string)      
       if !ok || email == "" {  
          code := r.URL.Query().Get("code")
          if code == "" {
@@ -161,6 +161,6 @@ func NewOauth(server *SherryServer.Server) (*Oauth2, error) {
       Scopes: scope,
       TokenUrl: tokenUrl,
       UserUrl: userUrl,
-      JwtKey: jwtKey,
+      JwtKey: byte(jwtKey),
    }, nil
 }
