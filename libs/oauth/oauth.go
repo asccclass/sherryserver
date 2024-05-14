@@ -73,6 +73,11 @@ func(app *Oauth2) GetJWTToken(tokenString string) (*jwt.Token, error) {
 }
 
 func(app *Oauth2) IsValidJWT(r *http.Request) (error) {
+   for key, values := range r.Header {
+		for _, value := range values {
+			fmt.Printf("%s: %s\n", key, value)
+		}
+	}
    str := r.Header.Get("Authorization")
    if str == "" {
       return fmt.Errorf("JWT missing in request header")
@@ -120,7 +125,6 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
                fmt.Println("登入成功，但 FISAAuthenticate 失敗:", err.Error())
                return
             }
-            fmt.Println("next serve http:", code)
             next.ServeHTTP(w, r) 
          }
       } else {
