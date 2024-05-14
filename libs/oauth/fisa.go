@@ -145,7 +145,7 @@ func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code 
   }
   // 將 JWT 寫入 HTTP 標頭
   customWriter := &CustomResponseWriter{
-	  ResponseWriter: w,
+	  ResponseWriter: w, 
 	  RecordedHeaders: make(http.Header),
   }
   customWriter.Header().Set("Content-Type", "application/json; charset=utf-8")

@@ -121,7 +121,7 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
                return
             }
             fmt.Println("next serve http:", code)
-            next.ServeHTTP(w, r)
+            next.ServeHTTP(w, r) 
          }
       } else {
          if err := app.IsValidJWT(r); err != nil {
