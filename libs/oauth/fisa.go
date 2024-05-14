@@ -118,6 +118,20 @@ func(app *Oauth2) FISAGetUserInfoViaCode(code string)(*FISAUserInfo, error) {
 	return app.GetFISAUserInfo(accessToken.AccessToken)
 }
 
+// 登出
+func(app *Oauth2) Logout(w http.ResponseWriter, r *http.Request) {
+	session, err := app.Server.SessionManager.Get(r, "fisaOauth")
+	session.Options.MaxAge = -1
+	delete(session.Values, "token")
+	delete(session.Values, "email")	
+	w.Header().Del("Authorization")
+	if err := session.Save(r, w); err!= nil {
+		return w, fmt.Errorf("Save Session Error: %s", err.Error())
+	}
+	url := "/"
+	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+}
+
 // Protect 認證完成後，回到這個網址
 func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code string)(http.ResponseWriter, error) {
 	userinfo, err := app.FISAGetUserInfoViaCode(code)  // 取得個人資料
