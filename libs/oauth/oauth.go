@@ -115,7 +115,7 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
          } else {
             fmt.Println("登入成功，導向原本頁面")
             var err error
-            w, err = app.FISAAuthenticate(w, r, code) // 登入成功，導向原本頁面
+            r, err = app.FISAAuthenticate(w, r, code) // 登入成功，導向原本頁面
             if err != nil { // 登入成功，導向原本頁面
                fmt.Println("登入成功，但 FISAAuthenticate 失敗:", err.Error())
                return
