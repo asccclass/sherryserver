@@ -120,15 +120,18 @@ func(app *Oauth2) FISAGetUserInfoViaCode(code string)(*FISAUserInfo, error) {
 
 // 登出
 func(app *Oauth2) Logout(w http.ResponseWriter, r *http.Request) {
+	url := "/"
 	session, err := app.Server.SessionManager.Get(r, "fisaOauth")
+	if err != nil {
+		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+	}
 	session.Options.MaxAge = -1
 	delete(session.Values, "token")
 	delete(session.Values, "email")	
 	w.Header().Del("Authorization")
 	if err := session.Save(r, w); err!= nil {
-		return w, fmt.Errorf("Save Session Error: %s", err.Error())
+		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 	}
-	url := "/"
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
