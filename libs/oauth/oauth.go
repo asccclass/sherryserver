@@ -125,9 +125,11 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
                fmt.Println("登入成功，但 FISAAuthenticate 失敗:", err.Error())
                return
             }
+            w.Header().Set("Content-Type", "application/json; charset=utf-8")
+            w.Header().Set("Authorization", w.Header().Get("Authorization"))
             next.ServeHTTP(w, r) 
          }
-      } else {
+      } else {  // 登入過
          if err := app.IsValidJWT(r); err != nil {
             // JWT 失效，導向登入頁面 JWT missing in request header
             fmt.Println("JWT 失效，導向登入頁面", err.Error())

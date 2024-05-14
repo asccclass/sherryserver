@@ -115,7 +115,6 @@ func(app *Oauth2) FISAGetUserInfoViaCode(code string)(*FISAUserInfo, error) {
 	if accessToken.AccessToken == "" {
 		return nil, fmt.Errorf("Error: Access Token is empty")
 	}
-	fmt.Println(accessToken)
 	return app.GetFISAUserInfo(accessToken.AccessToken)
 }
 
