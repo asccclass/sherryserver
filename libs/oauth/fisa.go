@@ -139,7 +139,7 @@ func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code 
   return r, nil
 }
 
-// 轉到 FISA 認證
+// 未登入，轉到 FISA 認證
 func(app *Oauth2) FISAAuthorize(w http.ResponseWriter, r *http.Request) {
 	state, err := app.State(32)
 	if err!= nil {
