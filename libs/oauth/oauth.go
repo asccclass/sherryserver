@@ -111,9 +111,9 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
          app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
          return
       }
-      email, ok := session.Values["email"].(string)      
+      email, ok := session.Values["email"].(string)    
+      code := r.URL.Query().Get("code")  
       if !ok || email == "" {  
-         code := r.URL.Query().Get("code")
          if code == "" {
             app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
             return
@@ -125,19 +125,25 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
                fmt.Println("登入成功，但 FISAAuthenticate 失敗:", err.Error())
                return
             }
-            w.Header().Set("Content-Type", "application/json; charset=utf-8")
-            w.Header().Set("Authorization", w.Header().Get("Authorization"))
             next.ServeHTTP(w, r) 
          }
       } else {  // 登入過
-         if err := app.IsValidJWT(r); err != nil {
+         tokenString, ok := session.Values["token"].(string)   
+         if !ok {
             // JWT 失效，導向登入頁面 JWT missing in request header
             fmt.Println("JWT 失效，導向登入頁面", err.Error())
             app.FISAAuthorize(w, r)    // JWT 失效，導向登入頁面
             return
          }
+         // 將 JWT 寫入 HTTP 標頭
+         customWriter := &CustomResponseWriter{
+            ResponseWriter: w, 
+            RecordedHeaders: make(http.Header),
+         }
+         customWriter.Header().Set("Content-Type", "application/json; charset=utf-8")
+         customWriter.Header().Set("Authorization", "Bearer " + tokenString)
          fmt.Println(email + "已經登入，進入Home Page頁面")
-         next.ServeHTTP(w, r)
+         next.ServeHTTP(customWriter, r)
       }
 	})
 }
