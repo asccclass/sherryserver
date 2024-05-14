@@ -118,7 +118,7 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
             app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
             return
          } else {
-            fmt.Println("登入成功，導向原本頁面")
+            // fmt.Println("登入成功，導向原本頁面")
             var err error
             w, err = app.FISAAuthenticate(w, r, code) // 登入成功，導向原本頁面
             if err != nil { // 登入成功，導向原本頁面
@@ -130,7 +130,6 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
       } else {  // 登入過
          tokenString, ok := session.Values["token"].(string)   
          if !ok {
-            // JWT 失效，導向登入頁面 JWT missing in request header
             fmt.Println("JWT 失效，導向登入頁面", err.Error())
             app.FISAAuthorize(w, r)    // JWT 失效，導向登入頁面
             return
@@ -142,7 +141,7 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
          }
          customWriter.Header().Set("Content-Type", "application/json; charset=utf-8")
          customWriter.Header().Set("Authorization", "Bearer " + tokenString)
-         fmt.Println(email + "已經登入，進入Home Page頁面")
+         // fmt.Println(email + "已經登入，進入Home Page頁面")
          next.ServeHTTP(customWriter, r)
       }
 	})
