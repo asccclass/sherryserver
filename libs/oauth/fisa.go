@@ -110,10 +110,10 @@ func(app *Oauth2) FISAGetUserInfoViaCode(code string)(*FISAUserInfo, error) {
 }
 
 // Protect 認證完成後，回到這個網址
-func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code string)(*http.Request, error) {
+func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code string)(http.ResponseWriter, error) {
 	userinfo, err := app.FISAGetUserInfoViaCode(code)  // 取得個人資料
 	if err != nil {
-		return r, fmt.Errorf("Get User info via code Error: %s", err.Error())
+		return w, fmt.Errorf("Get User info via code Error: %s", err.Error())
 	}
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
@@ -121,22 +121,22 @@ func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code 
 	claims["data"] = userinfo
 	tokenString, err := token.SignedString([]byte(app.JwtKey)) // 簽名 JWT
 	if err != nil {
-		return r, fmt.Errorf("Sign JWT Error: %s", err.Error())
+		return w, fmt.Errorf("Sign JWT Error: %s", err.Error())
   }
   // 寫入 session
   session, err := app.Server.SessionManager.Get(r, "fisaOauth")
   if err != nil {
-	  return r, fmt.Errorf("Get Session Error: %s", err.Error())
+	  return w, fmt.Errorf("Get Session Error: %s", err.Error())
   }
   session.Values["email"] = userinfo.Email   // 將Email存入Session
   session.Values["token"] = tokenString   	// 將Token存入Session
   if err := session.Save(r, w); err!= nil {
-	  return r, fmt.Errorf("Save Session Error: %s", err.Error())
+	  return w, fmt.Errorf("Save Session Error: %s", err.Error())
   }
   // 將 JWT 寫入 HTTP 標頭
   w.Header().Set("Content-Type", "application/json; charset=utf-8")
   w.Header().Add("Authorization", "Bearer " + tokenString)
-  return r, nil
+  return w, nil
 }
 
 // 未登入，轉到 FISA 認證
