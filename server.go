@@ -5,17 +5,18 @@ package SherryServer
 
 import(
    "os"
-	"fmt"
-	"time"
-	"strings"
+   "fmt"
+   "time"
+   "strings"
    "context"
    "syscall"
    "net/http"
    "os/signal"
    "go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+   "go.uber.org/zap/zapcore"
    "github.com/joho/godotenv"
-	"github.com/gorilla/sessions"
+   "github.com/gorilla/sessions"
+   "github.com/asccclass/sherryserver/libs/livekit"
 )
 
 type Server struct {
@@ -25,6 +26,7 @@ type Server struct {
    OriginAllow  *AhoCorasick
    MethodAllow  *AhoCorasick
    SessionManager *sessions.CookieStore
+   LiveKit	*SryLiveKit.LiveKit
    /*
    Template     *SherryTemplate.Template
    GeoLocation  *SherryGeoLocation.SryLocation

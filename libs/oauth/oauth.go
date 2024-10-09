@@ -8,12 +8,12 @@ import(
    "net/http"
    "crypto/rand"
    "encoding/base64"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/asccclass/sherryserver"
+   "github.com/golang-jwt/jwt/v5"
+   "github.com/asccclass/sherryserver"
 )
 
 type Oauth2 struct {
-	Server *SherryServer.Server   // Server is the server that this middleware is attached to.
+   Server *SherryServer.Server   // Server is the server that this middleware is attached to.
    ClientID  string	// ClientID is the application's ID.
    ClientSecret string// ClientSecret is the application's secret.
    Endpoint string

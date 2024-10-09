@@ -5,8 +5,8 @@ package SherryServer
 
 import(
    "os"
-	"regexp"
-	"strings"
+   "regexp"
+   "strings"
    "reflect"
    "net/http"
    "path/filepath"
@@ -24,14 +24,14 @@ type Register_Header struct{
 }
 
 func(h StaticFileServer) FixPrefix(prefix string)(string) {
-	prefix = regexp.MustCompile(`/*$`).ReplaceAllString(prefix, "")
-	if !strings.HasPrefix(prefix, "/") {
-		prefix = "/" + prefix
-	}
-	if prefix == "/" {
-		prefix = ""
-	}
-	return prefix
+   prefix = regexp.MustCompile(`/*$`).ReplaceAllString(prefix, "")
+   if !strings.HasPrefix(prefix, "/") {
+      prefix = "/" + prefix
+   }
+   if prefix == "/" {
+      prefix = ""
+   }
+   return prefix
 }
 
 // 取得Header參數
