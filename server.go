@@ -16,7 +16,7 @@ import(
    "go.uber.org/zap/zapcore"
    "github.com/joho/godotenv"
    "github.com/gorilla/sessions"
-   "github.com/asccclass/sherryserver/libs/livekit"
+   // "github.com/asccclass/sherryserver/libs/livekit"
 )
 
 type Server struct {
@@ -26,8 +26,8 @@ type Server struct {
    OriginAllow  *AhoCorasick
    MethodAllow  *AhoCorasick
    SessionManager *sessions.CookieStore
-   LiveKit	*SryLiveKit.LiveKit
    /*
+   LiveKit	*SryLiveKit.LiveKit
    Template     *SherryTemplate.Template
    GeoLocation  *SherryGeoLocation.SryLocation
    Wallpaper    *SryWallPaper.Bin
@@ -105,8 +105,8 @@ func NewServer(listenAddr, documentRoot, templatePath string) (*Server, error) {
       IdleTimeout:  15 * time.Second,
    }
    // 建立 Session Store
-	sessionManager := sessions.NewCookieStore([]byte("$$justgps@gmail.com#$&&%&&$$$$"))
-	// 處理Original 
+   sessionManager := sessions.NewCookieStore([]byte("$$justgps@gmail.com#$&&%&&$$$$"))
+   // 處理Original 
    orglists := NewAhoCorasick()
    methodlists := NewAhoCorasick()
    orgs := os.Getenv("OriginAllowList")   // ex."http://127.0.0.1:9999";....
