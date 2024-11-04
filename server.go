@@ -112,7 +112,7 @@ func NewServer(listenAddr, documentRoot, templatePath string) (*Server, error) {
    orgs := os.Getenv("OriginAllowList")   // ex."http://127.0.0.1:9999";....
    if orgs != "" {  // 有設定CROS
       orglists.AddPatterns(orgs, ";")
-   } 
+   }
    if methods := os.Getenv("AllowMethods"); methods != "" {
       methodlists.AddPatterns(strings.ToUpper(methods), ";")
    }

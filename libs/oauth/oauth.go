@@ -105,7 +105,7 @@ func(app *Oauth2) GetUserInfoFromRequest(r *http.Request) (map[string]interface{
 // 檢查是否有已經登入
 func(app *Oauth2) Protect(next http.Handler) http.Handler { 
    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {// 從 request 中讀取 session
-		session, err := app.Server.SessionManager.Get(r, "fisaOauth")
+      session, err := app.Server.SessionManager.Get(r, "fisaOauth")
       if err != nil {
          fmt.Println("未登入，導向登入頁面")
          app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
@@ -167,7 +167,7 @@ func NewOauth(server *SherryServer.Server) (*Oauth2, error) {
    }
    // sps := strings.Split(scopes, ",")
    return &Oauth2{
-		Server: server,
+      Server: server,
       ClientID: clientID,
       ClientSecret: clientSecret,
       Endpoint: endpoint,
