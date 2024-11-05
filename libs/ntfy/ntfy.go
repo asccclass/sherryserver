@@ -39,7 +39,7 @@ func(app *Notify) Send(w http.ResponseWriter, r *http.Request) {
       fmt.Fprintf(w, "Error: %s, Try use post data.", err.Error())
       return
    }
-   http.Post("https://ntfy.sh/mytopic", "text/plain", strings.NewReader(msg.Message)
+   http.Post("https://ntfy.sh/mytopic", "text/plain", strings.NewReader(msg.Message))
 }
 
 // Router 
