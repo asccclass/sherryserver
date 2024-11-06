@@ -1,17 +1,19 @@
 package Ntfy
 
 import(
-   "io"
-   "os"
+   // "io"
+   // "os"
    "fmt"
    "strings"
    "net/http"
-   "crypto/rand"
-   "encoding/base64"
+   "io/ioutil"
+   // "crypto/rand"
+   "encoding/json"
+   // "encoding/base64"
    "github.com/asccclass/sherryserver"
 )
 
-type NotifyMsessage struct {
+type NotifyMessage struct {
    To		string		`json:"to"`
    Message	string		`json:"message"`
    From		string		`json:"from"`
@@ -22,7 +24,11 @@ type Notify struct {
    ClientID  string	// ClientID is the application's ID.
 }
 
-func(app *Notify) Send(w http.ResponseWriter, r *http.Request) {
+func(app *Notify) Send(msg *NotifyMessage) {
+   http.Post("https://ntfy.sh/" + msg.To, "text/plain", strings.NewReader(msg.Message))
+}
+
+func(app *Notify) SendFromWeb(w http.ResponseWriter, r *http.Request) {
    w.WriteHeader(http.StatusOK)
    if err := r.ParseForm(); err != nil {
       fmt.Fprintf(w, "%s", err.Error())
@@ -39,12 +45,12 @@ func(app *Notify) Send(w http.ResponseWriter, r *http.Request) {
       fmt.Fprintf(w, "Error: %s, Try use post data.", err.Error())
       return
    }
-   http.Post("https://ntfy.sh/mytopic", "text/plain", strings.NewReader(msg.Message))
+   go app.Send(&msg)  // 有疑慮! 怕 func 結束，msg 物件也跟著被摧毀
 }
 
 // Router 
 func(app *Notify) AddRouter(router *http.ServeMux) {
-   router.HandleFunc("POST /ntfy/send", app.Send)
+   router.HandleFunc("POST /ntfy/send", app.SendFromWeb)
 }
 
 // "email,profile"
