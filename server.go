@@ -16,6 +16,7 @@ import(
    "go.uber.org/zap/zapcore"
    "github.com/joho/godotenv"
    "github.com/gorilla/sessions"
+   "github.com/asccclass/sherryserver/libs/socketio"
    // "github.com/asccclass/sherryserver/libs/livekit"
 )
 
@@ -26,6 +27,7 @@ type Server struct {
    OriginAllow  *AhoCorasick
    MethodAllow  *AhoCorasick
    SessionManager *sessions.CookieStore
+   Socketio     *SherrySocketIO.SrySocketio
    /*
    LiveKit	*SryLiveKit.LiveKit
    Template     *SherryTemplate.Template
@@ -36,7 +38,6 @@ type Server struct {
    JWTServerSecret      string
    IPInfo       *IPService.IP
    Crypt        *SryCrypt.Crypt
-   Socketio     *SherrySocketIO.SrySocketio
    Linebot      *SherryLineBot.LineBot
    LineLogin    *SryLineLogin.LineLogin
    SSE          *SherrySSE.SrySSE
@@ -116,5 +117,7 @@ func NewServer(listenAddr, documentRoot, templatePath string) (*Server, error) {
    if methods := os.Getenv("AllowMethods"); methods != "" {
       methodlists.AddPatterns(strings.ToUpper(methods), ";")
    }
-   return &Server {name, logger, srv, orglists, methodlists, sessionManager }, nil
+   // socketio Tool
+   skio := SherrySocketIO.NewSrySocketio()
+   return &Server {name, logger, srv, orglists, methodlists, sessionManager, skio }, nil
 }
