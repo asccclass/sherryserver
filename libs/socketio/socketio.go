@@ -70,9 +70,6 @@ func(app *SrySocketio) Heartbeat(clnt *Client) {
 
 // 執行go function
 func(app *SrySocketio) Run() {
-   ticker := time.NewTicker(5 * time.Second)
-   defer ticker.Stop()
-
    for {
       select {
          case client := <-app.Hub.Register:		// 註冊  onConnection
@@ -176,7 +173,7 @@ func(app *SrySocketio) Listen(w http.ResponseWriter, r *http.Request) {
 
 // Router
 func(app *SrySocketio) AddRouter(router *http.ServeMux) {
-   router.Handle("/ws", http.HandlerFunc(app.Listen))
+   router.HandleFunc("/ws", app.Listen)
    router.Handle("/create/channel/{name}", http.HandlerFunc(app.CreateChannel))
    router.Handle("POST /sendsocketmessageinjson", http.HandlerFunc(app.SendMessageInJson))
    router.Handle("POST /sendsocketmessageinstring", http.HandlerFunc(app.SendMessageInString))
@@ -205,6 +202,6 @@ func NewSrySocketio()(*SrySocketio) {
       AllRooms: m,
       Logfile: os.Getenv("socketiologfile"),
    }
-   ssio.Run()     // 啟動監聽
+   go ssio.Run()     // 啟動監聽
    return ssio
 }
