@@ -70,7 +70,7 @@ func(app *SrySocketio) Heartbeat(clnt *Client) {
 
 // 執行go function
 func(app *SrySocketio) Run() {
-   ticker := time.NewTicker(5 * time.second)
+   ticker := time.NewTicker(5 * time.Second)
    defer ticker.Stop()
 
    for {
