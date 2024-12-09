@@ -78,3 +78,6 @@ func NewRouter(srv *SherryServer.Server, documentRoot string)(*http.ServeMux) {
    return router
 }
 ```
+
+### 參考資料
+* https://github.com/EsotericTech/chatapp/tree/main
