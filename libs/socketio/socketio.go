@@ -3,10 +3,10 @@ package SherrySocketIO
 import(
    "os"
    "fmt"
+   "time"
    "strings"
    "net/http"
    "encoding/json"
-   "github.com/gorilla/mux"
    "github.com/gorilla/websocket" 
    "github.com/asccclass/sherrytime"
    "github.com/asccclass/foldertree"
@@ -47,17 +47,17 @@ type MessagePackage struct {
 }
 
 // Heart Beat
-func(app *SrySocketio) Heartbeat(clnt *client) {
+func(app *SrySocketio) Heartbeat(clnt *Client) {
    ticker := time.NewTicker(10 * time.Second)
-   defer ticker.Close()
+   defer ticker.Stop()
    for {
       select {
          case <-ticker.C:
             if err := clnt.Conn.WriteMessage(websocket.PingMessage, []byte("heartbeat")); err != nil {
                return
 	    }
-	    clnt.Conn.SetDeadline(time.Now().Add(10 * time.Second))
-	    _, _, err = clnt.Conn.ReadMessage()
+	    clnt.Conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+	    _, _, err := clnt.Conn.ReadMessage()
 	    if err != nil {
                // ToDo 重新連線 or 用戶離線
                fmt.Println(err.Error())
@@ -175,13 +175,13 @@ func(app *SrySocketio) Listen(w http.ResponseWriter, r *http.Request) {
 }
 
 // Router
-func(app *SrySocketio) AddRouter(router *mux.Router) {
-   router.HandleFunc("/ws", app.Listen)
-   router.HandleFunc("/create/channel/{name}", app.CreateChannel)
-   router.HandleFunc("/sendsocketmessageinjson", app.SendMessageInJson).Methods("POST")
-   router.HandleFunc("/sendsocketmessageinstring", app.SendMessageInString).Methods("POST")
-   router.HandleFunc("/createroom", app.CreateChannel).Methods("GET")
-   router.HandleFunc("/joinroom", app.JoinChannel).Methods("GET")
+func(app *SrySocketio) AddRouter(router *http.ServeMux) {
+   router.Handle("/ws", http.HandlerFunc(app.Listen))
+   router.Handle("/create/channel/{name}", http.HandlerFunc(app.CreateChannel))
+   router.Handle("POST /sendsocketmessageinjson", http.HandlerFunc(app.SendMessageInJson))
+   router.Handle("POST /sendsocketmessageinstring", http.HandlerFunc(app.SendMessageInString))
+   router.Handle("GET /createroom", http.HandlerFunc(app.CreateChannel))
+   router.Handle("GET /joinroom", http.HandlerFunc(app.JoinChannel))
 }
 
 // 初始化SrySocketio
