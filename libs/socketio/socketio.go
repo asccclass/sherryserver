@@ -67,7 +67,7 @@ func(app *SrySocketio) TransMessagePackageToJson(messagePackage *MessagePackage)
       messagePackage.TimeStamp = st.Now()
    }
    byteArray, _ := json.Marshal(messagePackage)  // 格式化輸出
-   app.BroadCastMessageWs(string(byteArray))
+   app.BroadCastMessageWs(byteArray)
 }
 
 // 加入訂閱者
@@ -82,9 +82,9 @@ func(app *SrySocketio) addSubscriber(subscriber *subscriber) {
 func(app *SrySocketio) Listen(w http.ResponseWriter, r *http.Request) {
    var c *websocket.Conn
    subscriber := &subscriber{
-      msgs: make(chan []byte, s.subscriberMessageBuffer),
+      msgs: make(chan []byte, app.subscriberMessageBuffer),
    }
-   s.addSubscriber(subscriber)
+   app.addSubscriber(subscriber)
 
    ctx := r.Context()
    c, err := websocket.Accept(w, r, nil)
@@ -123,7 +123,7 @@ func(app *SrySocketio) SendMessageInString(w http.ResponseWriter, r *http.Reques
 
 // Router
 func(app *SrySocketio) AddRouter(router *http.ServeMux) {
-   app.subscribersMu = router
+   // app.subscribersMu = router
    router.HandleFunc("/ws", app.Listen)
    router.Handle("POST /sendsocketmessageinstring", http.HandlerFunc(app.SendMessageInString))
 /*
