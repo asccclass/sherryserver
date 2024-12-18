@@ -1,15 +1,15 @@
 package SherrySocketIO
 
 import(
-   "os"
    "fmt"
    "time"
-   "strings"
+   "sync"
+   "context"
    "net/http"
+   "io/ioutil"
    "encoding/json"
    "github.com/coder/websocket"
    "github.com/asccclass/sherrytime"
-   "github.com/asccclass/foldertree"
 )
 
 type SrySocketio struct {
@@ -42,64 +42,9 @@ type MessagePackage struct {
 // PersonInfo   *Person                 `json:"person,omitempty"`
 }
 
-// Heart Beat
-func(app *SrySocketio) Heartbeat(clnt *Client) {
-   ticker := time.NewTicker(10 * time.Second)
-   defer ticker.Stop()
-   for {
-      select {
-         case <-ticker.C:
-            if err := clnt.Conn.WriteMessage(websocket.PingMessage, []byte("heartbeat")); err != nil {
-               return
-	    }
-	    clnt.Conn.SetReadDeadline(time.Now().Add(10 * time.Second))
-	    _, _, err := clnt.Conn.ReadMessage()
-	    if err != nil {
-               // ToDo 重新連線 or 用戶離線
-               fmt.Println(err.Error())
-	       delete (app.Hub.Clients, clnt)
-	       return
-	    }
-      }
-   }
-}
-
-// 執行go function
-func(app *SrySocketio) Run() {
-   for {
-      select {
-         case client := <-app.Hub.Register:		// 註冊  onConnection
-            app.Hub.Clients[client] = true
-         case client := <-app.Hub.Unregister:		// 離開  onClose
-            if _, ok := app.Hub.Clients[client]; ok {
-               delete(app.Hub.Clients, client)
-               close(client.Send)
-            }
-         case message := <-app.Hub.Specific:		// 傳送訊息給特定channel全部的人
-            for _, client := range app.AllRooms.Map[message.RoomID] {  // client is broadcastMsg
-               if(client.Conn != message.Client) {  // 不用送給自己
-                  if err := client.Conn.WriteJSON(message.Message); err != nil {
-                     fmt.Println(err.Error())
-                     client.Conn.Close()
-                  } 
-               }
-            } 
-         case message := <-app.Hub.Broadcast:		// 傳送訊息給全部人
-            for client := range app.Hub.Clients {
-               select {
-                  case client.Send <- message:
-                  default:
-                     close(client.Send)
-                     delete(app.Hub.Clients, client)
-               }
-            }
-      }
-   }
-}
-
 // 送出訊息給特定的人
-func(app *SrySocketio) ToSpecificMessage(data JsonMsg) {
-}
+// func(app *SrySocketio) ToSpecificMessage() {
+// }
 
 // 送出訊息給全部的Client
 func(app *SrySocketio) BroadCastMessageWs(message []byte) {
@@ -126,10 +71,10 @@ func(app *SrySocketio) TransMessagePackageToJson(messagePackage *MessagePackage)
 }
 
 // 加入訂閱者
-func(s *server) addSubscriber(subscriber *subscriber) {
-   s.subscribersMu.Lock()
-   s.subscribers[subscriber] = struct{}{}
-   s.subscribersMu.Unlock()
+func(app *SrySocketio) addSubscriber(subscriber *subscriber) {
+   app.subscribersMu.Lock()
+   app.subscribers[subscriber] = struct{}{}
+   app.subscribersMu.Unlock()
    fmt.Println("Added subscriber", subscriber)
 }
 
