@@ -80,7 +80,7 @@ func NewRouter(srv *SherryServer.Server, documentRoot string)(*http.ServeMux) {
 ```
 
 ### 內建函數
-* [websocket](websocket)
+* [websocket](websocket.md)
 
 ### 參考資料
 * https://github.com/EsotericTech/chatapp/tree/main
