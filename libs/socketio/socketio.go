@@ -7,24 +7,20 @@ import(
    "strings"
    "net/http"
    "encoding/json"
-   "github.com/gorilla/websocket" 
+   "github.com/coder/websocket"
    "github.com/asccclass/sherrytime"
    "github.com/asccclass/foldertree"
 )
 
-type SrySocketioHub struct {
-   Clients	map[*Client]bool
-   Broadcast	chan []byte
-   Register	chan *Client
-   Unregister	chan *Client
-   Specific	chan *broadcastMsg
+type SrySocketio struct {
+   subscriberMessageBuffer int
+   mux                     http.ServeMux
+   subscribersMu           sync.Mutex
+   subscribers             map[*subscriber]struct{}
 }
 
-type SrySocketio struct {
-   Hub		*SrySocketioHub
-   Upgrader	websocket.Upgrader
-   AllRooms	RoomMap
-   Logfile	string
+type subscriber struct {
+   msgs chan []byte
 }
 
 // HTTP log message
@@ -103,24 +99,20 @@ func(app *SrySocketio) Run() {
 
 // 送出訊息給特定的人
 func(app *SrySocketio) ToSpecificMessage(data JsonMsg) {
-   if data.To == ""  {
-      app.Hub.Broadcast <-[]byte(data.Message)
-   } else {
-      app.Hub.Broadcast <-[]byte(data.Message)
-/*
-      for client := range io.Hub.Clients {
-      }
-*/
-   }
 }
 
 // 送出訊息給全部的Client
-func(app *SrySocketio) BroadCastMessageWs(message string) {
-   app.Hub.Broadcast <-[]byte(message)
+func(app *SrySocketio) BroadCastMessageWs(message []byte) {
+   app.subscribersMu.Lock()
+   defer app.subscribersMu.Unlock()
+
+   for s := range app.subscribers {
+      s.msgs <- msg
+   }
 }
 
 // 送出訊息給特定的channel
-func(app *SrySocketio) BroadcastMessage2Channel(channel, message string) {
+func(app *SrySocketio) BroadcastMessage2Channel(channel, message []byte) {
 }
 
 // 格式化訊息
@@ -133,75 +125,74 @@ func(app *SrySocketio) TransMessagePackageToJson(messagePackage *MessagePackage)
    app.BroadCastMessageWs(string(byteArray))
 }
 
-// 初始化留言區內容
-func(app *SrySocketio) initialRead(client *Client, n int) {
-   trees, err := foldertree.NewSryDocument("linux", os.Getenv("markdownFolder"), false)
-   if err != nil {
-      fmt.Println(err.Error())
-      return
-   }
-   lines, err := trees.ReadLastNLines(app.Logfile, 20)
-   if err != nil {
-      fmt.Println(err.Error())
-      return
-   }
-   client.Send <- []byte(strings.Join(lines, "\n"))
+// 加入訂閱者
+func(s *server) addSubscriber(subscriber *subscriber) {
+   s.subscribersMu.Lock()
+   s.subscribers[subscriber] = struct{}{}
+   s.subscribersMu.Unlock()
+   fmt.Println("Added subscriber", subscriber)
 }
 
 // 處理 /ws 
 func(app *SrySocketio) Listen(w http.ResponseWriter, r *http.Request) {
-   ws, err := app.Upgrader.Upgrade(w, r, nil)
+   var c *websocket.Conn
+   subscriber := &subscriber{
+      msgs: make(chan []byte, s.subscriberMessageBuffer),
+   }
+   s.addSubscriber(subscriber)
+
+   ctx := r.Context()
+   c, err := websocket.Accept(w, r, nil)
    if err != nil {
-      st := sherrytime.NewSherryTime("Asia/Taipei", "-")  // Initial
-      fmt.Fprintf(w, "{\"status\": \"failure\", \"message\": \"" + err.Error() + "\", \"timestamp\":\"" + st.Now() + "\"}")
+      fmt.Println(err)
       return
    }
-   client := &Client{Conn: ws, Send: make(chan []byte, 1024)}  // 256
-   app.Hub.Register <- client
-
-   // 讀取log檔 參考：https://github.com/DrkCoater/go-tail-f-follows/blob/main/main.go#L211
-   if app.Logfile != "" {
-      go app.initialRead(client, 20)   // 讀取最後 20 行資料
+   defer c.CloseNow()
+   ctx = c.CloseRead(ctx)
+   for {
+      select {
+      case msg := <-subscriber.msgs:
+         ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+         defer cancel()
+         if err := c.Write(ctx, websocket.MessageText, msg); err != nil {
+            fmt.Println(err)
+            return
+         }
+      case <-ctx.Done():
+         fmt.Println(err)
+         return
+      }
    }
+}
 
-   go app.Heartbeat(client)
-   go client.WritePump(app.Hub)
-   go client.ReadPump(app.Hub)
-
-   app.BroadCastMessageWs("{\"type\": \"WS_MESSAGE\", \"payload\": \"someone connected\"}")
+// 處理 /sendmessage
+func(app *SrySocketio) SendMessageInString(w http.ResponseWriter, r *http.Request) {
+   b, err := ioutil.ReadAll(r.Body)
+   defer r.Body.Close()
+   if err != nil {
+      fmt.Println(err)
+      return
+   }
+   app.BroadCastMessageWs(b)
 }
 
 // Router
 func(app *SrySocketio) AddRouter(router *http.ServeMux) {
+   app.subscribersMu = router
    router.HandleFunc("/ws", app.Listen)
+   router.Handle("POST /sendsocketmessageinstring", http.HandlerFunc(app.SendMessageInString))
+/*
    router.Handle("/create/channel/{name}", http.HandlerFunc(app.CreateChannel))
    router.Handle("POST /sendsocketmessageinjson", http.HandlerFunc(app.SendMessageInJson))
-   router.Handle("POST /sendsocketmessageinstring", http.HandlerFunc(app.SendMessageInString))
    router.Handle("GET /createroom", http.HandlerFunc(app.CreateChannel))
    router.Handle("GET /joinroom", http.HandlerFunc(app.JoinChannel))
+*/
 }
 
 // 初始化SrySocketio
 func NewSrySocketio()(*SrySocketio) {
-   upgrader := websocket.Upgrader{ // StartSocketio
-      ReadBufferSize:  1024,
-      WriteBufferSize: 1024,
+   return &SrySocketio {
+      subscriberMessageBuffer: 10,
+      subscribers:             make(map[*subscriber]struct{}),
    }
-   hub := &SrySocketioHub {			// *Broadcaster
-      Clients:    make(map[*Client]bool),	// clients:    make(map[*Client]bool),
-      Broadcast:  make(chan []byte),		// broadcast:  make(chan string),
-      Register:   make(chan *Client),		// register:   make(chan *Client),
-      Unregister: make(chan *Client),		// unregister: make(chan *Client),
-      Specific:   make(chan *broadcastMsg),
-   }
-   var m RoomMap
-   m.Init()
-   ssio := &SrySocketio {
-      Hub: hub,
-      Upgrader: upgrader,
-      AllRooms: m,
-      Logfile: os.Getenv("socketiologfile"),
-   }
-   go ssio.Run()     // 啟動監聽
-   return ssio
 }
