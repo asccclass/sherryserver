@@ -20,7 +20,7 @@ type SrySocketio struct {
 }
 
 type subscriber struct {
-   Msgs chan []byte
+   msgs chan []byte
 }
 
 // HTTP log message
@@ -52,7 +52,7 @@ func(app *SrySocketio) BroadCastMessageWs(message []byte) {
    defer app.subscribersMu.Unlock()
 
    for s := range app.subscribers {
-      s.Msgs <- msg
+      s.msgs <- message
    }
 }
 
@@ -82,7 +82,7 @@ func(app *SrySocketio) addSubscriber(subscriber *subscriber) {
 func(app *SrySocketio) Listen(w http.ResponseWriter, r *http.Request) {
    var c *websocket.Conn
    subscriber := &subscriber{
-      Msgs: make(chan []byte, app.subscriberMessageBuffer),
+      msgs: make(chan []byte, app.subscriberMessageBuffer),
    }
    app.addSubscriber(subscriber)
 
@@ -96,7 +96,7 @@ func(app *SrySocketio) Listen(w http.ResponseWriter, r *http.Request) {
    ctx = c.CloseRead(ctx)
    for {
       select {
-      case msg := <-subscriber.Msgs:
+      case msg := <-subscriber.msgs:
          ctx, cancel := context.WithTimeout(ctx, time.Second*5)
          defer cancel()
          if err := c.Write(ctx, websocket.MessageText, msg); err != nil {
