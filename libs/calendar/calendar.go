@@ -1,7 +1,7 @@
 package SherryCalendar
 
 import (
-   "log"
+   // "log"
    "time"
    "strconv"
    "net/http"
@@ -131,6 +131,12 @@ func(app *Calendar) handleCalendar(w http.ResponseWriter, r *http.Request) {
            year = y
        }
    }
+   // 如果提供了月份參數
+   if queryMonth != "" {
+      if m, err := strconv.Atoi(queryMonth); err == nil {
+         month = time.Month(m)
+      }
+   }
    calendar := app.generateCalendarData(year, month)  // 生成日曆數據
    w.Header().Set("Content-Type", "application/json")
    json.NewEncoder(w).Encode(calendar)  // 返回 JSON 響應
@@ -138,7 +144,7 @@ func(app *Calendar) handleCalendar(w http.ResponseWriter, r *http.Request) {
 
 // 設置路由
 func(app *Calendar) AddRouter(router *http.ServeMux) {
-   http.Handle("GET /calendar", http.HandlerFunc(app.handleCalendar))
+   http.HandleFunc("GET /calendar", app.handleCalendar)
 }
 
 // 初始化SrySocketio
