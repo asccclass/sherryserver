@@ -70,10 +70,11 @@ func NewRouter(srv *SherryServer.Server, documentRoot string)(*http.ServeMux) {
 
 /*
    // App router
+   router.HandleFunc("GET /api/notes", GetAll)
+   router.HandleFunc("POST /api/notes", Post)
+
    router.Handle("/homepage", oauth.Protect(http.HandlerFunc(Home)))
    router.Handle("/upload", oauth.Protect(http.HandlerFunc(Upload)))
-   router.Handle("/download/{fileName}", oauth.Protect(http.HandlerFunc(Download)))
-   router.Handle("/logout", http.HandlerFunc(oauth.Logout))
 */	
    return router
 }
