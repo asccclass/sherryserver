@@ -17,6 +17,7 @@ import(
    "github.com/joho/godotenv"
    "github.com/gorilla/sessions"
    "github.com/asccclass/sherryserver/libs/socketio"
+   "github.com/asccclass/sherryserver/libs/calendar"
    // "github.com/asccclass/sherryserver/libs/livekit"
 )
 
@@ -28,6 +29,7 @@ type Server struct {
    MethodAllow  *AhoCorasick
    SessionManager *sessions.CookieStore
    Socketio     *SherrySocketIO.SrySocketio
+   Calendar	*SherryCalendar.Calendar
    /*
    LiveKit	*SryLiveKit.LiveKit
    Template     *SherryTemplate.Template
@@ -119,5 +121,7 @@ func NewServer(listenAddr, documentRoot, templatePath string) (*Server, error) {
    }
    // socketio Tool
    skio := SherrySocketIO.NewSrySocketio()
-   return &Server {name, logger, srv, orglists, methodlists, sessionManager, skio }, nil
+   // Calendar Tool
+   cal := SherryCalendar.NewSryCalendar()
+   return &Server {name, logger, srv, orglists, methodlists, sessionManager, skio, cal }, nil
 }

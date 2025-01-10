@@ -5,6 +5,7 @@ import (
    "fmt"
    "net/http"
    "net/smtp"
+   "crypto/rand"
    "database/sql"
    _ "modernc.org/sqlite"
 )
@@ -70,7 +71,7 @@ func(app *Register) register(w http.ResponseWriter, r *http.Request) {
    `, name, email, organization, verifyCode)
 
    if err != nil {
-       log.Printf("保存用戶錯誤: %v", err)
+       fmt.Printf("保存用戶錯誤: %v", err)
        w.Write([]byte(`<div class="error">註冊失敗，請稍後重試</div>`))
        return
    }
@@ -78,7 +79,7 @@ func(app *Register) register(w http.ResponseWriter, r *http.Request) {
    // 發送驗證郵件
    err = app.sendVerificationEmail(email, verifyCode)
    if err != nil {
-       log.Printf("發送驗證郵件錯誤: %v", err)
+       fmt.Printf("發送驗證郵件錯誤: %v", err)
        w.Write([]byte(`<div class="error">驗證郵件發送失敗，請檢查郵箱地址</div>`))
        return
    }

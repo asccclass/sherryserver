@@ -3,13 +3,13 @@ package SherryRegister
 import (
    "os"
    "fmt"
-   "log"
+   "time"
    "regexp"
    "net/http"
-   "net/smtp"
-   "crypto/rand"
+   // "net/smtp"
+   // "crypto/rand"
    "database/sql"
-   "encoding/json"
+   // "encoding/json"
    _ "modernc.org/sqlite"
 )
 
@@ -17,9 +17,16 @@ type User struct {
    ID            int    `json:"id"`
    Name          string `json:"name"`
    Email         string `json:"email"`
+   Password      string `json:"password"`
    Organization  string `json:"organization"`
    VerifyCode    string `json:"verify_code"`
    IsVerified    bool   `json:"is_verified"`
+}
+
+type Response struct {
+   Status  string `json:"status"`
+   Message string `json:"message"`
+   HTML    string `json:"html,omitempty"`
 }
 
 type Config struct {
@@ -33,10 +40,12 @@ type Config struct {
 type Register struct {
    DB		*sql.DB
    Info		Config
+   CsrfTokens	map[string]time.Time
 }
 
 func(app *Register) initDB()(error) {
-   app.DB, err := sql.Open("sqlite", app.Info.DBPath)
+   var err error
+   app.DB, err = sql.Open("sqlite", app.Info.DBPath)
    if err != nil {
       return err
    }
@@ -80,7 +89,7 @@ func(app *Register) validateEmail(w http.ResponseWriter, r *http.Request) {
    var count int
    err := app.DB.QueryRow("SELECT COUNT(*) FROM users WHERE email = ?", email).Scan(&count)
    if err != nil {
-      log.Printf("檢查郵箱錯誤: %v", err)
+      fmt.Printf("檢查郵箱錯誤: %v", err)
       w.Write([]byte(`<div class="error">系統錯誤</div>`))
       return
    }
@@ -89,15 +98,6 @@ func(app *Register) validateEmail(w http.ResponseWriter, r *http.Request) {
       return
    }
    w.Write([]byte(`<div class="success">電子郵件格式正確</div>`))
-}
-
-func(app *Register) validateOrganization(w http.ResponseWriter, r *http.Request) {
-   org := r.FormValue("organization")
-   if len(org) < 2 {
-      w.Write([]byte(`<div class="error">服務單位至少需要 2 個字元</div>`))
-      return
-   }
-   w.Write([]byte(`<div class="success">服務單位格式正確</div>`))
 }
 
 func(app *Register) validateName(w http.ResponseWriter, r *http.Request) {
@@ -111,11 +111,11 @@ func(app *Register) validateName(w http.ResponseWriter, r *http.Request) {
 
 // Router
 func(app *Register) AddRouter(router *http.ServeMux) {
-   router.HandleFunc("/validate/name", app.validateName)
-   router.HandleFunc("/validate/email", validateEmail)
-   router.HandleFunc("/validate/organization", validateOrganization)
-   router.HandleFunc("/register", register)
-   router.HandleFunc("/verify", verifyEmail)
+   router.HandleFunc("/validate/name", csrfMiddleware(app.validateName))
+   router.HandleFunc("/validate/email", csrfMiddleware(app.validateEmail))
+   router.HandleFunc("/validate/organization", csrfMiddleware(app.validateOrganization))
+   router.HandleFunc("/register", csrfMiddleware(app.register))
+   router.HandleFunc("/verify", app.verifyEmail)
 }
 
 func NewRegister()(*Register, error) {
@@ -128,6 +128,7 @@ func NewRegister()(*Register, error) {
    }
    rg := &Register {
       Info: config,
+      CsrfTokens: make(map[string]time.Time),
    }
    if err := rg.initDB(); err != nil {  // 初始化數據庫
       return nil, err
