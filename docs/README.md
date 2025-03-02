@@ -80,6 +80,12 @@ func NewRouter(srv *SherryServer.Server, documentRoot string)(*http.ServeMux) {
 }
 ```
 
+## 輸出錯誤方式
+```
+app.Srv.Logger.Info("Server stopped")
+app.Srv.Logger.Fatal(err.Error(), zap.String("addr", app.Server.Addr))
+```
+
 ### 內建函數
 * [websocket](websocket.md)
 

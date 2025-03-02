@@ -18,7 +18,7 @@ import(
    "github.com/gorilla/sessions"
    "github.com/asccclass/sherryserver/libs/socketio"
    "github.com/asccclass/sherryserver/libs/calendar"
-   // "github.com/asccclass/sherryserver/libs/livekit"
+   "github.com/asccclass/staticfileserver/libs/errorexecuter"
 )
 
 type Server struct {
@@ -30,12 +30,12 @@ type Server struct {
    SessionManager *sessions.CookieStore
    Socketio     *SherrySocketIO.SrySocketio
    Calendar	*SherryCalendar.Calendar
+   Error        *SherryErrorExecuter.ErrorExecuter
    /*
    LiveKit	*SryLiveKit.LiveKit
    Template     *SherryTemplate.Template
    GeoLocation  *SherryGeoLocation.SryLocation
    Wallpaper    *SryWallPaper.Bin
-   Error        *SherryErrorExecuter.ErrorExecuter
    Dbconnect    *SherryDB.DBConnect
    JWTServerSecret      string
    IPInfo       *IPService.IP
@@ -101,7 +101,7 @@ func NewServer(listenAddr, documentRoot, templatePath string) (*Server, error) {
    errorLog, _ := zap.NewStdLogAt(logger, zap.ErrorLevel)
    srv := &http.Server{
       Addr:         listenAddr,
-      // Handler:      router,   // 後面再assign
+      Handler:      nil,   // 後面再assign
       ErrorLog:     errorLog,
       ReadTimeout:  20 * time.Second,
       WriteTimeout: 10 * time.Second,
@@ -123,5 +123,9 @@ func NewServer(listenAddr, documentRoot, templatePath string) (*Server, error) {
    skio := SherrySocketIO.NewSrySocketio()
    // Calendar Tool
    cal := SherryCalendar.NewSryCalendar()
-   return &Server {name, logger, srv, orglists, methodlists, sessionManager, skio, cal }, nil
+
+   // ErrorExecuter
+   sryerror, _ := SherryErrorExecuter.NewErrorExecuter()
+
+   return &Server {name, logger, srv, orglists, methodlists, sessionManager, skio, cal, sryerror }, nil
 }
