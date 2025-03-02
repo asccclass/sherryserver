@@ -18,7 +18,7 @@ import(
    "github.com/gorilla/sessions"
    "github.com/asccclass/sherryserver/libs/socketio"
    "github.com/asccclass/sherryserver/libs/calendar"
-   "github.com/asccclass/staticfileserver/libs/errorexecuter"
+   "github.com/asccclass/sherryserver/libs/errorexecuter"
 )
 
 type Server struct {
