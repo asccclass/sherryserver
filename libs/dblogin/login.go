@@ -41,7 +41,7 @@ func(app *DBLoginService) login(w http.ResponseWriter, r *http.Request) {
    // store tokens in the database
    user.SessionToken = sessionToken
    user.CSRFToken = csrfToken
-   users[name] = user
+   app.users[name] = user
 
    fmt.Fprintln(w, "Login successful!")
 }
