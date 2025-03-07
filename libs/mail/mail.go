@@ -42,7 +42,7 @@ func(app *SMTPMail) getMineType(imageName string)(string) {
 }
 
 // SMTP 認證 && 寄信
-func(app *SMTPMail) send(to string, msg bytes.Buffer)(error) {
+func(app *SMTPMail) Send(to string, msg bytes.Buffer)(error) {
    auth := smtp.PlainAuth("", app.From, app.Password, app.Host)
    // 寄送郵件 fix)使用 msg.Bytes() 獲取 []byte
    if err := smtp.SendMail(app.Host + ":" + app.Port, auth, app.From, []string{to}, msg.Bytes() ); err != nil {
