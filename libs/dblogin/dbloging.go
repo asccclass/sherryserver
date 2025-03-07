@@ -1,13 +1,7 @@
 package DBLoginService
 
 import(
-   "os"
-   "fmt"
-   "strings"
    "net/http"
-   "crypto/rand"
-   "encoding/base64"
-   "github.com/golang-jwt/jwt/v5"
    "github.com/asccclass/sherryserver"
 )
 
@@ -19,10 +13,11 @@ type Login struct {
 
 type DBLoginService struct {
    Server *SherryServer.Server   // Server is the server that this middleware is attached to.
+   users	map[string]Login
 }
 
 // Router 
-func(app *Oauth2) AddRouter(router *http.ServeMux) {
+func(app *DBLoginService) AddRouter(router *http.ServeMux) {
    router.HandleFunc("POST /login/register", app.register)
    router.HandleFunc("POST /login", app.login)
 }
@@ -32,5 +27,6 @@ func NewDBLoginService(server *SherryServer.Server) (*DBLoginService, error) {
    server.Logger.Info("Initial DB Login service ok")
    return &DBLoginService {
       Server: server,
+      users: make(map[string]Login),
    }, nil
 }

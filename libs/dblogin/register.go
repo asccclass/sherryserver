@@ -63,13 +63,13 @@ func(app *DBLoginService) register(w http.ResponseWriter, r *http.Request) {
       http.Error(w, "Invalid user name or password", http.StatusNotAcceptable)
       return
    }
-   if _, ok := users[name]; ok {
+   if _, ok := app.users[name]; ok {
       http.Error(w, "User already exists", http.StatusConflict)
       return
    }
 
    hashPassword, _ := app.hashPassword(pass)
-   users[name] = Login {
+   app.users[name] = Login {
       HashedPassword: hashPassword,
    }
    fmt.Fprintln(w, "User registered successfully!")

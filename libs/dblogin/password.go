@@ -1,6 +1,7 @@
 package DBLoginService
 
 import(
+   "fmt"
    "crypto/rand"
    "encoding/base64"
    "golang.org/x/crypto/bcrypt"
@@ -9,11 +10,11 @@ import(
 // 將密碼加密
 func(app *DBLoginService) hashPassword(password string)(string, error) {
    xpass, err := bcrypt.GenerateFromPassword([]byte(password), 10)
-   return (string)xpass, err
+   return string(xpass), err
 }
 
 // 檢查 Hash 密碼是否正確
-func(app *DBLoninService) checkPasswordHash(password, hash string)(bool) {
+func(app *DBLoginService) checkPasswordHash(password, hash string)(bool) {
    err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
    return err == nil
 }

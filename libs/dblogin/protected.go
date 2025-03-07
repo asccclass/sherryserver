@@ -2,7 +2,6 @@ package DBLoginService
 
 import(
    "fmt"
-   "time"
    "net/http"
 )
 

@@ -16,19 +16,19 @@ func(app *DBLoginService) logout(w http.ResponseWriter, r *http.Request) {
    http.SetCookie(w, &http.Cookie {
       Name:  "session_token",
       Value: "",
-      Expires: time.Now.Add(-time.Hour),
+      Expires: time.Now().Add(-time.Hour),
       HttpOnly: true,
-   }
+   })
    http.SetCookie(w, &http.Cookie {
       Name:  "csrf_token",
       Value: "",
-      Expires: time.Now.Add(-time.Hour),
-      HttpOnly: false, 
-   }
+      Expires: time.Now().Add(-time.Hour),
+      HttpOnly: false,
+   })
 
    // clear the tokens from the database
    name := r.FormValue("username")
-   user, _ := users[name]
+   user, _ := app.users[name]
    user.SessionToken = ""
    user.CSRFToken = ""
    app.users[name] = user
