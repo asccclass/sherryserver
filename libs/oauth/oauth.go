@@ -26,11 +26,11 @@ type Oauth2 struct {
 
 // state参数用於防止CSRF（Cross site attack)  傳入長度，通常32
 func(app *Oauth2) State(n int) (string, error) {
-	data := make([]byte, n)
-	if _, err := io.ReadFull(rand.Reader, data); err != nil {
-		 return "", err
-	}
-	return base64.StdEncoding.EncodeToString(data), nil
+   data := make([]byte, n)
+   if _, err := io.ReadFull(rand.Reader, data); err != nil {
+       return "", err
+   }
+   return base64.StdEncoding.EncodeToString(data), nil
 }
 
 // 取得個人資料 from Authorization Code
@@ -68,16 +68,16 @@ func(app *Oauth2) GetJWTToken(tokenString string) (*jwt.Token, error) {
    }
    if _, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
       return token, nil
-   } 
-   return nil, fmt.Errorf("Failed to get username from JWT")   
+   }
+   return nil, fmt.Errorf("Failed to get username from JWT")
 }
 
 func(app *Oauth2) IsValidJWT(r *http.Request) (error) {
    for key, values := range r.Header {
-		for _, value := range values {
-			fmt.Printf("%s: %s\n", key, value)
-		}
+	for _, value := range values {
+		fmt.Printf("%s: %s\n", key, value)
 	}
+   }
    str := r.Header.Get("Authorization")
    if str == "" {
       return fmt.Errorf("JWT missing in request header")
@@ -103,40 +103,41 @@ func(app *Oauth2) GetUserInfoFromRequest(r *http.Request) (map[string]interface{
 // Access Token: {"ErrorCode":"invalid_request","Error":"Authorization Code expired"}
 // Access Token: {"ErrorCode":"invalid_request","Error":"Authorization Code revoked"}
 // 檢查是否有已經登入
-func(app *Oauth2) Protect(next http.Handler) http.Handler { 
+func(app *Oauth2) Protect(next http.Handler) http.Handler {
    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {// 從 request 中讀取 session
+      // bug fix: 防止使用者未登出造成 exp 過期，故第一次登入要更新exp
+      code := r.URL.Query().Get("code")
+      if code != "" {
+         var err error
+         w, err = app.FISAAuthenticate(w, r, code) // 登入成功，導向原本頁面
+         if err != nil {
+            fmt.Println("登入成功，但 FISAAuthenticate 失敗:", err.Error())
+            return
+         }
+         next.ServeHTTP(w, r)
+      }
       session, err := app.Server.SessionManager.Get(r, "fisaOauth")
       if err != nil {
          fmt.Println("未登入，導向登入頁面")
          app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
          return
       }
-      email, ok := session.Values["email"].(string)    
-      code := r.URL.Query().Get("code")  
-      if !ok || email == "" {  
-         if code == "" {
-            app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
-            return
-         } else {
-            // fmt.Println("登入成功，導向原本頁面")
-            var err error
-            w, err = app.FISAAuthenticate(w, r, code) // 登入成功，導向原本頁面
-            if err != nil { // 登入成功，導向原本頁面
-               fmt.Println("登入成功，但 FISAAuthenticate 失敗:", err.Error())
-               return
-            }
-            next.ServeHTTP(w, r) 
-         }
+      email, ok := session.Values["email"].(string)
+      if !ok || email == "" {
+         app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
+         return
       } else {  // 登入過
-         tokenString, ok := session.Values["token"].(string)   
+         tokenString, ok := session.Values["token"].(string)  // 取得 Session 資料，但exp有可能時間已過
          if !ok {
             fmt.Println("JWT 失效，導向登入頁面", err.Error())
             app.FISAAuthorize(w, r)    // JWT 失效，導向登入頁面
             return
          }
+	 // bug)更新 exp 時間
+
          // 將 JWT 寫入 HTTP 標頭
          customWriter := &CustomResponseWriter{
-            ResponseWriter: w, 
+            ResponseWriter: w,
             RecordedHeaders: make(http.Header),
          }
          customWriter.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -144,7 +145,7 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
          // fmt.Println(email + "已經登入，進入Home Page頁面")
          next.ServeHTTP(customWriter, r)
       }
-	})
+   })
 }
 
 // Router 
@@ -157,7 +158,7 @@ func NewOauth(server *SherryServer.Server) (*Oauth2, error) {
    endpoint := os.Getenv("EndPoint")
    clientID := os.Getenv("ClientID")
    clientSecret := os.Getenv("ClientSecret")
-	redirectUri := os.Getenv("RedirectUri") // RedirectUri is the URL to redirect users going through the OAuth flow
+   redirectUri := os.Getenv("RedirectUri") // RedirectUri is the URL to redirect users going through the OAuth flow
    scope := os.Getenv("Scope")
    tokenUrl := os.Getenv("TokenUrl")
    userUrl := os.Getenv("UserUrl")

@@ -6,7 +6,7 @@ package Oauth
 
 import(
    // "os"
-	// "io"
+   // "io"
    "fmt"
 	"time"
 	"net/url"
@@ -16,30 +16,30 @@ import(
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type AccessToken struct {	
-	AccessToken string `json:"access_token"`
-	TokenType string `json:"token_type"`
-	ExpiresIn int `json:"expires_in"`
-	Scope string `json:"scope"`
-	RefreshToken string `json:"refresh_token"` 
-	Error string `json:"error"`
-	ErrorDescription string `json:"error_description"`
+type AccessToken struct {
+   AccessToken string `json:"access_token"`
+   TokenType string `json:"token_type"`
+   ExpiresIn int `json:"expires_in"`
+   Scope string `json:"scope"`
+   RefreshToken string `json:"refresh_token"`
+   Error string `json:"error"`
+   ErrorDescription string `json:"error_description"`
 }
 
 // "cn":"andyliu","chName":"OOO","phone":"02-27899963","email":"andyliu@gate.sinica.edu.tw","instCode":"24","sysid":"119511"}
 type FISAUserInfo struct {
-	Cn string `json:"cn"`
-	ChName string `json:"chName"`
-	Phone string `json:"phone"`
-	Email string `json:"email"`
-	InstCode string `json:"instCode"`
-	Sysid string `json:"sysid"`
+   Cn string `json:"cn"`
+   ChName string `json:"chName"`
+   Phone string `json:"phone"`
+   Email string `json:"email"`
+   InstCode string `json:"instCode"`
+   Sysid string `json:"sysid"`
 }
 
 // 自定義的 ResponseWriter
 type CustomResponseWriter struct {
-	http.ResponseWriter
-	RecordedHeaders http.Header
+   http.ResponseWriter
+   RecordedHeaders http.Header
 }
 
 func(w *CustomResponseWriter) Header() http.Header {
@@ -98,7 +98,7 @@ func(app *Oauth2) GetFISAUserInfo(accessToken string) (*FISAUserInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-   
+
 	var userInfo FISAUserInfo
 	if err := json.Unmarshal(body, &userInfo); err != nil {
 		return nil, err
@@ -111,24 +111,24 @@ func(app *Oauth2) FISAGetUserInfoViaCode(code string)(*FISAUserInfo, error) {
    accessToken, err := app.GetFISAAccessToken(code)   // 先取得 Access Token
    if err != nil {
       return nil, err
-   }	
-	if accessToken.AccessToken == "" {
-		return nil, fmt.Errorf("Error: Access Token is empty")
-	}
-	return app.GetFISAUserInfo(accessToken.AccessToken)
+   }
+   if accessToken.AccessToken == "" {
+	return nil, fmt.Errorf("Error: Access Token is empty")
+   }
+   return app.GetFISAUserInfo(accessToken.AccessToken)
 }
 
 // 登出
 func(app *Oauth2) Logout(w http.ResponseWriter, r *http.Request) {
-	url := "/"
-	session, err := app.Server.SessionManager.Get(r, "fisaOauth")
-	if err != nil {
-		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
-	}
-	session.Options.MaxAge = -1
-	delete(session.Values, "token")
-	delete(session.Values, "email")	
-	w.Header().Del("Authorization")
+   url := "/"
+   session, err := app.Server.SessionManager.Get(r, "fisaOauth")
+   if err != nil {
+      http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+   }
+   session.Options.MaxAge = -1
+   delete(session.Values, "token")
+   delete(session.Values, "email")
+   w.Header().Del("Authorization")
 	if err := session.Save(r, w); err!= nil {
 		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 	}
@@ -137,45 +137,45 @@ func(app *Oauth2) Logout(w http.ResponseWriter, r *http.Request) {
 
 // Protect 認證完成後，回到這個網址
 func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code string)(http.ResponseWriter, error) {
-	userinfo, err := app.FISAGetUserInfoViaCode(code)  // 取得個人資料
-	if err != nil {
-		return w, fmt.Errorf("Get User info via code Error: %s", err.Error())
-	}
-	token := jwt.New(jwt.SigningMethodHS256)
-	claims := token.Claims.(jwt.MapClaims)
-	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
-	claims["data"] = userinfo
-	tokenString, err := token.SignedString([]byte(app.JwtKey)) // 簽名 JWT
-	if err != nil {
-		return w, fmt.Errorf("Sign JWT Error: %s", err.Error())
-  }
-  // 寫入 session
-  session, err := app.Server.SessionManager.Get(r, "fisaOauth")
-  if err != nil {
-	  return w, fmt.Errorf("Get Session Error: %s", err.Error())
-  }
-  session.Values["email"] = userinfo.Email   // 將Email存入Session
-  session.Values["token"] = tokenString   	// 將Token存入Session
-  if err := session.Save(r, w); err!= nil {
-	  return w, fmt.Errorf("Save Session Error: %s", err.Error())
-  }
-  // 將 JWT 寫入 HTTP 標頭
-  customWriter := &CustomResponseWriter{
-	  ResponseWriter: w, 
-	  RecordedHeaders: make(http.Header),
-  }
-  customWriter.Header().Set("Content-Type", "application/json; charset=utf-8")
-  customWriter.Header().Set("Authorization", "Bearer " + tokenString)
-  return customWriter, nil
+   userinfo, err := app.FISAGetUserInfoViaCode(code)  // 取得個人資料
+   if err != nil {
+      return w, fmt.Errorf("Get User info via code Error: %s", err.Error())
+   }
+   token := jwt.New(jwt.SigningMethodHS256)
+   claims := token.Claims.(jwt.MapClaims)
+   claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
+   claims["data"] = userinfo
+   tokenString, err := token.SignedString([]byte(app.JwtKey)) // 簽名 JWT
+   if err != nil {
+      return w, fmt.Errorf("Sign JWT Error: %s", err.Error())
+   }
+   // 寫入 session
+   session, err := app.Server.SessionManager.Get(r, "fisaOauth")
+   if err != nil {
+      return w, fmt.Errorf("Get Session Error: %s", err.Error())
+   }
+   session.Values["email"] = userinfo.Email   // 將Email存入Session
+   session.Values["token"] = tokenString      // 將Token存入Session
+   if err := session.Save(r, w); err!= nil {
+      return w, fmt.Errorf("Save Session Error: %s", err.Error())
+   }
+   // 將 JWT 寫入 HTTP 標頭
+   customWriter := &CustomResponseWriter{
+      ResponseWriter: w, 
+      RecordedHeaders: make(http.Header),
+   }
+   customWriter.Header().Set("Content-Type", "application/json; charset=utf-8")
+   customWriter.Header().Set("Authorization", "Bearer " + tokenString)
+   return customWriter, nil
 }
 
 // 未登入，轉到 FISA 認證
 func(app *Oauth2) FISAAuthorize(w http.ResponseWriter, r *http.Request) {
-	state, err := app.State(32)
-	if err!= nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	url := fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&response_type=code&scope=%s&state=%s", app.Endpoint, app.ClientID, app.RedirectUri, app.Scopes, state)   	
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+   state, err := app.State(32)
+   if err!= nil {
+      http.Error(w, err.Error(), http.StatusInternalServerError)
+      return
+   }
+   url := fmt.Sprintf("%s?client_id=%s&redirect_uri=%s&response_type=code&scope=%s&state=%s", app.Endpoint, app.ClientID, app.RedirectUri, app.Scopes, state)
+   http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
