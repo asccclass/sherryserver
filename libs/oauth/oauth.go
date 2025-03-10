@@ -124,8 +124,11 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
       }
       email, ok := session.Values["email"].(string)
       if !ok || email == "" {
-         app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
-         return
+         if code == "" {
+            app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
+            return
+         } else {
+	 }
       } else {  // 登入過
          tokenString, ok := session.Values["token"].(string)  // 取得 Session 資料，但exp有可能時間已過
          if !ok {

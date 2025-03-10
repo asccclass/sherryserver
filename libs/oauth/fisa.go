@@ -113,7 +113,7 @@ func(app *Oauth2) FISAGetUserInfoViaCode(code string)(*FISAUserInfo, error) {
       return nil, err
    }
    if accessToken.AccessToken == "" {
-	return nil, fmt.Errorf("Error: Access Token is empty")
+      return nil, fmt.Errorf("Error: Access Token is empty:" + code)
    }
    return app.GetFISAUserInfo(accessToken.AccessToken)
 }
@@ -137,6 +137,9 @@ func(app *Oauth2) Logout(w http.ResponseWriter, r *http.Request) {
 
 // Protect 認證完成後，回到這個網址
 func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code string)(http.ResponseWriter, error) {
+   if code == "" {
+      return w, fmt.Errorf("code is empty.")
+   }
    userinfo, err := app.FISAGetUserInfoViaCode(code)  // 取得個人資料
    if err != nil {
       return w, fmt.Errorf("Get User info via code Error: %s", err.Error())
