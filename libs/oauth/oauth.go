@@ -33,6 +33,39 @@ func(app *Oauth2) State(n int) (string, error) {
    return base64.StdEncoding.EncodeToString(data), nil
 }
 
+// 更新exp時間
+func(app *Oauth2) UpdateExpTime(tokenString string)(string, error) {
+   token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+      if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+         return "", fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+      }
+      return []byte(app.JwtKey), nil
+   })
+   if err != nil {
+      return "", err
+   }
+   // Check if token is expired, Token is expired, extending expiry by 24 hours
+   if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+      if exp, ok := claims["exp"].(float64); ok {
+         expTime := time.Unix(int64(exp), 0)
+          if time.Now().After(expTime) {
+             claims["exp"] = time.Now().Add(24 * time.Hour).Unix()
+             newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+             newTokenString, err := newToken.SignedString([]byte(app.JwtKey))
+	     if err != nil {
+                return "", err
+	     }
+	     return newTokenString, nil
+	  } else {
+             return tokenString, nil  // Token is still valid
+	  }
+      } else {
+         return "", fmt.Errorf("exp claim not found in token")
+      }
+   }
+   return "", fmt.Errorf("token is expired")
+}
+
 // 取得個人資料 from Authorization Code
 func(app *Oauth2) GetUserInfoFromJWT(tokenString string) (map[string]interface{}, error) {
    userinfo := make(map[string]interface{})
@@ -74,9 +107,9 @@ func(app *Oauth2) GetJWTToken(tokenString string) (*jwt.Token, error) {
 
 func(app *Oauth2) IsValidJWT(r *http.Request) (error) {
    for key, values := range r.Header {
-	for _, value := range values {
-		fmt.Printf("%s: %s\n", key, value)
-	}
+      for _, value := range values {
+         fmt.Printf("%s: %s\n", key, value)
+      }
    }
    str := r.Header.Get("Authorization")
    if str == "" {
@@ -105,17 +138,6 @@ func(app *Oauth2) GetUserInfoFromRequest(r *http.Request) (map[string]interface{
 // 檢查是否有已經登入
 func(app *Oauth2) Protect(next http.Handler) http.Handler {
    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {// 從 request 中讀取 session
-      // bug fix: 防止使用者未登出造成 exp 過期，故第一次登入要更新exp
-      code := r.URL.Query().Get("code")
-      if code != "" {
-         var err error
-         w, err = app.FISAAuthenticate(w, r, code) // 登入成功，導向原本頁面
-         if err != nil {
-            fmt.Println("登入成功，但 FISAAuthenticate 失敗:", err.Error())
-            return
-         }
-         next.ServeHTTP(w, r)
-      }
       session, err := app.Server.SessionManager.Get(r, "fisaOauth")
       if err != nil {
          fmt.Println("未登入，導向登入頁面")
@@ -123,20 +145,38 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
          return
       }
       email, ok := session.Values["email"].(string)
+      code := r.URL.Query().Get("code")
       if !ok || email == "" {
          if code == "" {
             app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
             return
          } else {
-	 }
+            // fmt.Println("登入成功，導向原本頁面")
+            var err error
+            w, err = app.FISAAuthenticate(w, r, code) // 登入成功，導向原本頁面
+            if err != nil { // 登入成功，導向原本頁面
+               fmt.Println("登入成功，但 FISAAuthenticate 失敗:", err.Error())
+               return
+            }
+            next.ServeHTTP(w, r)
+         }
       } else {  // 登入過
-         tokenString, ok := session.Values["token"].(string)  // 取得 Session 資料，但exp有可能時間已過
+         tokenString, ok := session.Values["token"].(string)
          if !ok {
             fmt.Println("JWT 失效，導向登入頁面", err.Error())
             app.FISAAuthorize(w, r)    // JWT 失效，導向登入頁面
             return
          }
-	 // bug)更新 exp 時間
+	 // 更新 tokenString 中的時間
+	 if code != "" {
+            newTKstring, err := app.UpdateExpTime(tokenString)
+	    if err != nil {
+               fmt.Println("JWT更新失效", err.Error())
+               app.FISAAuthorize(w, r)
+               return
+	    }
+	    tokenString = newTKstring  // 更新 exp 時間
+	 }
 
          // 將 JWT 寫入 HTTP 標頭
          customWriter := &CustomResponseWriter{
