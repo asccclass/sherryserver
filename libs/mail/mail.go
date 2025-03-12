@@ -71,10 +71,10 @@ func(app *SMTPMail) AddImages(img string, images []Image)([]Image, error) {
 }
 
 func NewSMTPMail()(*SMTPMail, error) {
-   smtpEmail := os.Getenv("smtpEmail")
+   smtpEmail := os.Getenv("smtpEmail")  // smtpEmail
    password := os.Getenv("smtpPassword")
-   if password == "" || smtpEmail == "" {
-      return nil, fmt.Errorf("email sender email or password not set")
+   if smtpEmail == "" {
+      return nil, fmt.Errorf("email or password not set")
    }
    smtpHost := os.Getenv("mailHost")
    if smtpHost == "" {
