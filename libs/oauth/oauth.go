@@ -46,7 +46,7 @@ func(app *Oauth2) UpdateExpTime(tokenString string)(string, error) {
       return "", err
    }
    // Check if token is expired, Token is expired, extending expiry by 24 hours
-   if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+   if claims, ok := token.Claims.(jwt.MapClaims); ok {
       if exp, ok := claims["exp"].(float64); ok {
          expTime := time.Unix(int64(exp), 0)
           if time.Now().After(expTime) {
@@ -64,7 +64,7 @@ func(app *Oauth2) UpdateExpTime(tokenString string)(string, error) {
          return "", fmt.Errorf("exp claim not found in token")
       }
    }
-   return "", fmt.Errorf("token is expired")
+   return "", fmt.Errorf("token is not valid")
 }
 
 // 取得個人資料 from Authorization Code
@@ -142,6 +142,7 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
       session, err := app.Server.SessionManager.Get(r, "fisaOauth")
       if err != nil {
          fmt.Println("未登入，導向登入頁面")
+	 app.Logout(w, r) // 登出
          app.FISAAuthorize(w, r)    // 未登入，導向登入頁面
          return
       }
@@ -172,7 +173,7 @@ func(app *Oauth2) Protect(next http.Handler) http.Handler {
 	 if code != "" {
             newTKstring, err := app.UpdateExpTime(tokenString)
 	    if err != nil {
-               fmt.Println("JWT更新失效", err.Error())
+               fmt.Println("JWT更新失效", err.Error()) //token has invalid claims: token is expired
                app.FISAAuthorize(w, r)
                return
 	    }

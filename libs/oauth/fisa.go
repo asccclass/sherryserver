@@ -129,10 +129,10 @@ func(app *Oauth2) Logout(w http.ResponseWriter, r *http.Request) {
    delete(session.Values, "token")
    delete(session.Values, "email")
    w.Header().Del("Authorization")
-	if err := session.Save(r, w); err!= nil {
-		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
-	}
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+   if err := session.Save(r, w); err!= nil {
+      http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+   }
+   http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
 // Protect 認證完成後，回到這個網址
