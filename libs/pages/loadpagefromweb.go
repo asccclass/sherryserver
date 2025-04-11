@@ -1,4 +1,4 @@
-package SherryPages
+package SherryPage
 
 import(
    "os"

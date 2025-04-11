@@ -9,7 +9,7 @@ import(
 )
 
 // 01.Sum function to split the string and sum the values
-func(app *Pages) strSum(input string)(int){
+func(app *Page) strSum(input string)(int){
    values := strings.Split(input, ",")
    total := 0
    for _, v := range values {
@@ -22,7 +22,7 @@ func(app *Pages) strSum(input string)(int){
 }
 
 // 02計算百分比
-func(app *Pages) calPercentage(part, whole float64)(float64){
+func(app *Page) calPercentage(part, whole float64)(float64){
    if whole == 0 {
       return 0 // 防止除以零錯誤
    }
@@ -31,7 +31,7 @@ func(app *Pages) calPercentage(part, whole float64)(float64){
 }
 
 // 03.轉成 int
-func(app *Pages) toInt(s any)(int) {
+func(app *Page) toInt(s any)(int) {
    switch v := s.(type) {
        case int:
           return v
@@ -54,7 +54,7 @@ func(app *Pages) toInt(s any)(int) {
 }
 
 // 04.轉成字串
-func(app *Pages) toString(s any)(string) {
+func(app *Page) toString(s any)(string) {
    switch v := s.(type) {
        case int:
           return strconv.Itoa(v)
@@ -71,7 +71,7 @@ func(app *Pages) toString(s any)(string) {
 }
 
 // 05.定義一個將字串轉換為浮點數的函數
-func(app *Pages) toFloat64(s any) (float64) {
+func(app *Page) toFloat64(s any) (float64) {
    switch v := s.(type) {
        case int:
           return float64(v)
@@ -94,17 +94,17 @@ func(app *Pages) toFloat64(s any) (float64) {
 }
 
 // 06.兩數相乘
-func(app *Pages) multiply(a, b any)(float64) {
+func(app *Page) multiply(a, b any)(float64) {
    return app.toFloat64(a) * app.toFloat64(b)
 }
 
 // 07.兩數相減
-func(app *Pages) minus(a, b float64)(float64) {
+func(app *Page) minus(a, b float64)(float64) {
    return a - b
 }
 
 // 08.取得月份
-func(app *Pages) getArrayValueByMonth(a []any)(any) {
+func(app *Page) getArrayValueByMonth(a []any)(any) {
    if len(a) == 0 {
       return 0
    }
@@ -113,7 +113,7 @@ func(app *Pages) getArrayValueByMonth(a []any)(any) {
 }
 
 // 09.getFieldValue .stocks  "no"  "00919"  "yield"
-func(app *Pages) getFieldValue(data []any, fieldName, fieldValue, valName string)(any) {
+func(app *Page) getFieldValue(data []any, fieldName, fieldValue, valName string)(any) {
    for _, item := range data { // 檢查 item 是否為 map[string]any
       if record, ok := item.(map[string]any); ok { // 比對 fieldName 對應的值是否等於 fieldValue
          if record[fieldName] == fieldValue { // 回傳 valName 對應的值
@@ -125,6 +125,6 @@ func(app *Pages) getFieldValue(data []any, fieldName, fieldValue, valName string
 }
 
 // 10.透過 Index 取得陣列內容
-func(app *Pages) getArrayValueByIndex(a []any, idx int)(any) {
+func(app *Page) getArrayValueByIndex(a []any, idx int)(any) {
    return a[idx]
 }
