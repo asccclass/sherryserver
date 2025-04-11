@@ -33,7 +33,7 @@ type Server struct {
    Error        *SherryErrorExecuter.ErrorExecuter
    /*
    LiveKit	*SryLiveKit.LiveKit
-   Template     *SherryTemplate.Template
+   Template	*SherryPages.Page
    GeoLocation  *SherryGeoLocation.SryLocation
    Wallpaper    *SryWallPaper.Bin
    Dbconnect    *SherryDB.DBConnect
@@ -105,7 +105,7 @@ func NewServer(listenAddr, documentRoot, templatePath string) (*Server, error) {
       ErrorLog:     errorLog,
       ReadTimeout:  20 * time.Second,
       WriteTimeout: 10 * time.Second,
-      IdleTimeout:  15 * time.Second,
+      IdleTimeout:  120 * time.Second,
    }
    // 建立 Session Store
    sessionManager := sessions.NewCookieStore([]byte("$$justgps@gmail.com#$&&%&&$$$$"))
