@@ -4,7 +4,6 @@ import(
    "os"
    "fmt"
    "bytes"
-   "embed"
    "strings"
    "net/http"
    "html/template"
