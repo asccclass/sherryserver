@@ -8,12 +8,12 @@ import(
    // "os"
    // "io"
    "fmt"
-	"time"
-	"net/url"
+   "time"
+   "net/url"
    "net/http"
-	"io/ioutil"
-	"encoding/json"
-	"github.com/golang-jwt/jwt/v5"
+   "io/ioutil"
+   "encoding/json"
+   "github.com/golang-jwt/jwt/v5"
 )
 
 type AccessToken struct {
@@ -48,10 +48,10 @@ func(w *CustomResponseWriter) Header() http.Header {
 
 // Step 0. Url Fetch
 func(app *Oauth2) UrlFetch(urlz string, params map[string]string)([]byte, error) {
-	query := url.Values{}
-	for key, value := range params {
-	   query.Add(key, value)
-	}
+   query := url.Values{}
+   for key, value := range params {
+      query.Add(key, value)
+   }
 	urlWithParams := fmt.Sprintf("%s?%s", urlz, query.Encode())
 	response, err := http.Get(urlWithParams)
 	if err != nil {
