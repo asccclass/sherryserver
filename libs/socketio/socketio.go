@@ -125,6 +125,7 @@ func(app *SrySocketio) SendMessageInString(w http.ResponseWriter, r *http.Reques
 func(app *SrySocketio) AddRouter(router *http.ServeMux) {
    // app.subscribersMu = router
    router.HandleFunc("/ws", app.Listen)
+   router.HandleFunc("/sse", app.ListenSSE)
    router.Handle("POST /sendsocketmessageinstring", http.HandlerFunc(app.SendMessageInString))
 /*
    router.Handle("/create/channel/{name}", http.HandlerFunc(app.CreateChannel))

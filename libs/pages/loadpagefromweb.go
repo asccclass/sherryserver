@@ -112,8 +112,7 @@ func(app *Page) LoadPageFromWeb(w http.ResponseWriter, r *http.Request) {
    }
    var p []byte
    _, err := os.Stat(app.Path + page + ".json")
-   if err != nil {
-      // 不存在就不做任何事
+   if err != nil { // 不存在就不做任何事
    } else { // 讀取資料內容 *.json
       p, err = os.ReadFile(app.Path + page + ".json")  // 任務區塊
       if err != nil {
