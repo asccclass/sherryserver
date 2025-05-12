@@ -1,6 +1,6 @@
 # HTTP Server with tools
 
-主要用來作為伺服器使用。移除 grolla 函數，改用內建的 net/http 函數，
+主要用來作為伺服器使用。移除 grolla 函數依賴，改用內建的 net/http 函數，
 並重構相關函數。
 
 ## 使用範例
@@ -19,8 +19,8 @@ import (
 
 func main() {
    if err := godotenv.Load("envfile"); err != nil {
-	   fmt.Println(err.Error())
-	   return
+      fmt.Println(err.Error())
+      return
    }
    port := os.Getenv("PORT")
    if port == "" {
