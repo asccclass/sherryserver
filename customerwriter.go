@@ -13,6 +13,12 @@ type HttpWriterFlusher struct {
    http.Flusher  // keep a ref to the wrapped Flusher
 }
 
+type HttpWriter struct {
+   w http.ResponseWriter // wrap an existing writer
+   headerWritten bool
+}
+
+
 // implement http.ResponseWriter
 func(w *HttpWriter) Header()(http.Header) {
    return w.w.Header()
