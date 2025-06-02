@@ -28,11 +28,11 @@ func main() {
    }
    documentRoot := os.Getenv("DocumentRoot")
    if documentRoot == "" {
-      documentRoot = "www"
+      documentRoot = "www/html"
    }
    templateRoot := os.Getenv("TemplateRoot")
    if templateRoot == "" {
-      templateRoot = "www/html"
+      templateRoot = "www/template"
    }
 
    server, err := SherryServer.NewServer(":" + port, documentRoot, templateRoot)
