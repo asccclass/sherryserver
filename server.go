@@ -87,7 +87,7 @@ func(app *Server) Start() {
             app.Logger.Fatal(err.Error(), zap.String("addr", app.Server.Addr))
           }
       } else {
-         if err := app.Server.ListenAndServeTLS(app.Server.Addr, certfile, keyfile, nil); err != nil && err != http.ErrServerClosed {
+         if err := app.Server.ListenAndServeTLS(certfile, keyfile); err != nil && err != http.ErrServerClosed {
             app.Logger.Fatal(err.Error(), zap.String("addr", app.Server.Addr))
          }
       }
