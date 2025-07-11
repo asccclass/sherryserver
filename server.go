@@ -80,8 +80,16 @@ func(app *Server) gracefulShutdown() {
 func(app *Server) Start() {
    defer app.gracefulShutdown()
    go func() {
-      if err := app.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-         app.Logger.Fatal(err.Error(), zap.String("addr", app.Server.Addr))
+      keyfile := os.Getenv("sslKeyfile")
+      certfile := os.Getenv("sslCertification")
+      if keyfile == "" || certfile == "" {
+         if err := app.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+            app.Logger.Fatal(err.Error(), zap.String("addr", app.Server.Addr))
+          }
+      } else {
+         if err := app.Server.ListenAndServeTLS(app.Server.Addr, certfile, keyfile, nil); err != nil && err != http.ErrServerClosed {
+            app.Logger.Fatal(err.Error(), zap.String("addr", app.Server.Addr))
+         }
       }
    }()
    app.Logger.Info("Server is ready to handle requests at " + app.Server.Addr)
