@@ -66,7 +66,9 @@ func(app *Page) PrintPage(p, pageName string, w http.ResponseWriter) {
    // 此函數只處理預設的樣板：sidebar.tpl
    _, err := os.Stat(app.Path + pages[0] + "-sidebar.tpl")
    if os.IsNotExist(err) {
-      pages = append(pages, "sidebar.tpl")
+      if _, err := os.Stat(app.Path + pages[0] + "-sidebar.tpl"); err == nil {
+         pages = append(pages, "sidebar.tpl")
+      }
    } else {
       pages = append(pages, pages[0] + "-sidebar.tpl")
    }
