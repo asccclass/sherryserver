@@ -7,7 +7,6 @@ import(
    "net/http"
    "html/template"
    "github.com/asccclass/sherryserver"
-   "github.com/asccclass/sherryserver/libs/pages"
 )
 
 type Page struct {
