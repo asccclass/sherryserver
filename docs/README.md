@@ -1,7 +1,10 @@
 # HTTP Server with tools
 
-主要用來作為伺服器使用。移除 grolla 函數依賴，改用內建的 net/http 函數，
-並重構相關函數。
+主要用來作為伺服器使用。移除 grolla 函數依賴，改用內建的 net/http 函數，並重構相關函數。
+
+## 需要環境
+* Go 版本：1.25 以上版本
+  - 以便可以使用：[http.CrossOriginProtection](https://pkg.go.dev/net/http#CrossOriginProtection) CROS保護
 
 ## 使用範例
 
@@ -179,3 +182,4 @@ func main() {
 
 ### 參考資料
 * https://github.com/EsotericTech/chatapp/tree/main
+* https://www.alexedwards.net/blog/preventing-csrf-in-go#summary

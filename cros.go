@@ -1,5 +1,8 @@
 /*
    StaticServer CROS 公用程式
+   Go 1.25 introduced a new http.CrossOriginProtection middleware to the standard library
+     - The new http.CrossOriginProtection middleware works by checking the values in a request's Sec-Fetch-Site and 
+       Origin headers to determine where the request is coming from, and will send a 403 Forbidden response.
 */
 package SherryServer
 
