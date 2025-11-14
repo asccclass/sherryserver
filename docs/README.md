@@ -6,6 +6,43 @@
 * Go 版本：1.25 以上版本
   - 以便可以使用：[http.CrossOriginProtection](https://pkg.go.dev/net/http#CrossOriginProtection) CROS保護
 
+## 環境建置
+### Dockerfile
+
+```
+FROM alpine
+
+WORKDIR /app
+COPY ./app /app
+ENTRYPOINT ["/app/app"]
+```
+
+### envfile 範例
+```
+SystemName=APIGateway
+PORT=80
+
+DBMSType=MySQL
+DBSERVER=MySQLx
+DBNAME=todo.db
+DBLOGIN=root
+DBPASSWORD=oooxxx
+DBPath=/app/data/
+
+OriginAllowList=https://www.justdrink.com.tw;http://www.justdrink.com.tw;https://finance.justdrink.com.tw;https://www.jhupat.org.tw
+AllowMethods=POST;GET;DELETE;PUT
+
+DocumentRoot=www/html
+TemplateRoot=www/template/
+TempRoot=www/temp
+QRCodePath=www/temp
+
+datafiles=/app/data/
+socketiologfile=logs/register.log
+
+ServerURL=https://www.justdrink.com.tw/apigateway/
+```
+
 ## 使用範例
 
 * server.go
@@ -180,6 +217,17 @@ func main() {
 ### 內建函數
 * [websocket](websocket.md)
 
-### 參考資料
+## 公用程式
+### clean.sh  清除無用的 Docker container
+
+```
+#!/bin/sh
+
+docker rmi $(docker images | grep "none" | awk '{print $3}')
+clear
+docker ps -a
+```
+
+## 參考資料
 * https://github.com/EsotericTech/chatapp/tree/main
 * https://www.alexedwards.net/blog/preventing-csrf-in-go#summary
