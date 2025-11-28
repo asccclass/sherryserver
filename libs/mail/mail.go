@@ -17,11 +17,17 @@ type Image struct {
    ContentID   string // 用於 HTML 中的 cid
 }
 
+// smtp 帳號（可多組）
+type SMTPAccount struct {
+   Host		string	`json:"host"`
+   Port		int	`json:"port"`
+   User		string	`json:"user"`
+   Password	string	`json:"password"`
+   Cnt		int	`json:"count"`
+}
+
 type SMTPMail struct {
-   Host		string		`json:host"`
-   Port		string		`json:"port"`
-   From		string
-   Password	string
+   CFG		Config
 }
 
 // 根據檔案副檔名判斷 MIME 類型
@@ -44,11 +50,15 @@ func(app *SMTPMail) getMineType(imageName string)(string) {
 // SMTP 認證 && 寄信
 func(app *SMTPMail) Send(to string, msg bytes.Buffer, needAuth bool)(error) {
    var auth smtp.Auth
+   acc, err := app.SelectMinCntConfig()
+   if err != nil {
+      return err
+   }
    if needAuth {
-      auth = smtp.PlainAuth("", app.From, app.Password, app.Host)
+      auth = smtp.PlainAuth("", acc.User, acc.Password, acc.Host)
    }
    // 寄送郵件 fix)使用 msg.Bytes() 獲取 []byte
-   if err := smtp.SendMail(app.Host + ":" + app.Port, auth, app.From, []string{to}, msg.Bytes() ); err != nil {
+   if err := smtp.SendMail(acc.Host + ":" + acc.Port, auth, acc.User, []string{to}, msg.Bytes() ); err != nil {
       return fmt.Errorf("寄送郵件失敗:", err.Error())
    }
    return nil
@@ -74,25 +84,14 @@ func(app *SMTPMail) AddImages(img string, images []Image)([]Image, error) {
 }
 
 func NewSMTPMail()(*SMTPMail, error) {
-   smtpEmail := os.Getenv("smtpEmail")  // smtpEmail
-   password := os.Getenv("smtpPassword")
-   if smtpEmail == "" {
-      return nil, fmt.Errorf("email or password not set")
+   sm := &SMTPMail {
    }
-   smtpHost := os.Getenv("mailHost")
-   if smtpHost == "" {
-      smtpHost = "smtp.gmail.com"
+   cfg, err := sm.LoadConfig()  // 取得SMTP資訊
+   if err != nil {
+      return nil, err
    }
-   smtpPort := os.Getenv("smtpPort")
-   if smtpPort == "" {
-      smtpPort = "587"
-   }
-   return &SMTPMail {
-      Host: smtpHost,
-      Port: smtpPort,
-      From: smtpEmail,
-      Password: password,
-   }, nil
+   sm.CFG = cfg
+   return sm, nil
 }
 
 /*
