@@ -206,7 +206,7 @@ func main() {
    // MIME 結束
    msg.WriteString(fmt.Sprintf("--%s--\r\n", boundary))
    // SMTP 認證
-   if err := app.send(app.From, msg); err != nil {
+   if err := app.Send(app.From, msg, true); err != nil {
       fmt.Println("send err:", err.Error())
       return
    }
