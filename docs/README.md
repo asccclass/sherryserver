@@ -105,7 +105,7 @@ func NewRouter(srv *SherryServer.Server, documentRoot string)(*http.ServeMux) {
    router := http.NewServeMux()
 
    // Static File server
-   staticfileserver := SherryServer.StaticFileServer{documentRoot, "index.html"}
+   staticfileserver := SherryServer.StaticFileServer{StaticPath: documentRoot, IndexPath: "index.html"}
    staticfileserver.AddRouter(router)
 
 /*
