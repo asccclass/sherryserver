@@ -139,7 +139,9 @@ func(app *Calendar) handleCalendar(w http.ResponseWriter, r *http.Request) {
    }
    calendar := app.generateCalendarData(year, month)  // 生成日曆數據
    w.Header().Set("Content-Type", "application/json")
-   json.NewEncoder(w).Encode(calendar)  // 返回 JSON 響應
+   if err := json.NewEncoder(w).Encode(calendar); err != nil {
+      http.Error(w, "Failed to encode calendar data", http.StatusInternalServerError)
+   }
 }
 
 // 設置路由
