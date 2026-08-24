@@ -1,73 +1,74 @@
 package Ntfy
 
-import(
-   // "io"
-   // "os"
-   "fmt"
-   "regexp"
-   "strings"
-   "net/http"
-   "net/url"
-   "io/ioutil"
-   // "crypto/rand"
-   "encoding/json"
-   // "encoding/base64"
-   "github.com/asccclass/sherryserver"
+import (
+	// "io"
+	// "os"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"regexp"
+	"strings"
+
+	// "crypto/rand"
+	"encoding/json"
+	// "encoding/base64"
+	SherryServer "github.com/asccclass/sherryserver"
 )
 
 type NotifyMessage struct {
-   To		string		`json:"to"`
-   Message	string		`json:"message"`
-   From		string		`json:"from"`
+	To      string `json:"to"`
+	Message string `json:"message"`
+	From    string `json:"from"`
 }
 
 type Notify struct {
-   Server *SherryServer.Server   // Server is the server that this middleware is attached to.
-   ClientID  string	// ClientID is the application's ID.
+	Server   *SherryServer.Server // Server is the server that this middleware is attached to.
+	ClientID string               // ClientID is the application's ID.
 }
 
-func(app *Notify) Send(msg *NotifyMessage) {
-   // Validate msg.To to prevent SSRF and Path Traversal
-   validTopic := regexp.MustCompile(`^[a-zA-Z0-9-_]+$`)
-   if !validTopic.MatchString(msg.To) {
-      fmt.Println("Invalid topic format")
-      return
-   }
-   
-   // 使用 url.PathEscape 確保輸入被當作單一路徑節點處理，避免掃描工具誤判
-   safePath := url.PathEscape(msg.To)
-   targetURL := fmt.Sprintf("https://ntfy.sh/%s", safePath)
-   http.Post(targetURL, "text/plain", strings.NewReader(msg.Message))
+func (app *Notify) Send(msg *NotifyMessage) {
+	// Validate msg.To to prevent SSRF and Path Traversal
+	validTopic := regexp.MustCompile(`^[a-zA-Z0-9-_]+$`)
+	if !validTopic.MatchString(msg.To) {
+		fmt.Println("Invalid topic format")
+		return
+	}
+
+	// 使用 url.PathEscape 確保輸入被當作單一路徑節點處理，避免掃描工具誤判
+	safePath := url.PathEscape(msg.To)
+	targetURL := fmt.Sprintf("https://ntfy.sh/%s", safePath)
+	http.Post(targetURL, "text/plain", strings.NewReader(msg.Message))
 }
 
-func(app *Notify) SendFromWeb(w http.ResponseWriter, r *http.Request) {
-   w.WriteHeader(http.StatusOK)
-   if err := r.ParseForm(); err != nil {
-      fmt.Fprintf(w, "%s", err.Error())
-      return
-   }
-   b, err := ioutil.ReadAll(r.Body)
-   defer r.Body.Close()
-   if err != nil {
-      fmt.Fprintf(w, "Error: %s, Try post data.", err.Error())
-      return
-   }
-   var msg NotifyMessage
-   if err := json.Unmarshal(b, &msg); err != nil {
-      fmt.Fprintf(w, "Error: %s, Try use post data.", err.Error())
-      return
-   }
-   go app.Send(&msg)  // 有疑慮! 怕 func 結束，msg 物件也跟著被摧毀
+func (app *Notify) SendFromWeb(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	if err := r.ParseForm(); err != nil {
+		fmt.Fprintf(w, "%s", err.Error())
+		return
+	}
+	b, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		fmt.Fprintf(w, "Error: %s, Try post data.", err.Error())
+		return
+	}
+	var msg NotifyMessage
+	if err := json.Unmarshal(b, &msg); err != nil {
+		fmt.Fprintf(w, "Error: %s, Try use post data.", err.Error())
+		return
+	}
+	go app.Send(&msg) // 有疑慮! 怕 func 結束，msg 物件也跟著被摧毀
 }
 
-// Router 
-func(app *Notify) AddRouter(router *http.ServeMux) {
-   router.HandleFunc("POST /ntfy/send", app.SendFromWeb)
+// Router
+func (app *Notify) AddRouter(router *http.ServeMux) {
+	router.HandleFunc("POST /ntfy/send", app.SendFromWeb)
 }
 
 // "email,profile"
 func NewNtfy(server *SherryServer.Server) (*Notify, error) {
-   return &Notify{
-      Server: server,
-   }, nil
+	return &Notify{
+		Server: server,
+	}, nil
 }

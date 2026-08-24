@@ -9,7 +9,8 @@ import(
 
 // 將密碼加密
 func(app *DBLoginService) hashPassword(password string)(string, error) {
-   xpass, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+   // 提高 bcrypt KDF 的 cost 參數到 14，增強密碼雜湊強度
+   xpass, err := bcrypt.GenerateFromPassword([]byte(password), 14)
    return string(xpass), err
 }
 
