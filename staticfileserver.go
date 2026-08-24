@@ -68,7 +68,8 @@ func (h StaticFileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_, err = os.Stat(path)
 	if os.IsNotExist(err) {
 		if r.TLS == nil && r.Header.Get("X-Forwarded-Proto") != "https" {
-			http.Redirect(w, r, "https://"+r.Host+r.URL.String(), http.StatusMovedPermanently)
+			// 改為直接回傳 403 Forbidden，避免依賴可被偽造的 r.Host 導致 Open Redirect 漏洞
+			http.Error(w, "HTTPS required", http.StatusForbidden)
 			return
 		}
 		w.Header().Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
