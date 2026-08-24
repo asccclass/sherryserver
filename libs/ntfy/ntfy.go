@@ -7,6 +7,7 @@ import(
    "regexp"
    "strings"
    "net/http"
+   "net/url"
    "io/ioutil"
    // "crypto/rand"
    "encoding/json"
@@ -32,7 +33,11 @@ func(app *Notify) Send(msg *NotifyMessage) {
       fmt.Println("Invalid topic format")
       return
    }
-   http.Post("https://ntfy.sh/" + msg.To, "text/plain", strings.NewReader(msg.Message))
+   
+   // 使用 url.PathEscape 確保輸入被當作單一路徑節點處理，避免掃描工具誤判
+   safePath := url.PathEscape(msg.To)
+   targetURL := fmt.Sprintf("https://ntfy.sh/%s", safePath)
+   http.Post(targetURL, "text/plain", strings.NewReader(msg.Message))
 }
 
 func(app *Notify) SendFromWeb(w http.ResponseWriter, r *http.Request) {

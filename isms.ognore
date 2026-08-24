@@ -1,0 +1,2 @@
+### 應用程式在 sherryserver-main\staticfileserver.go 檔案的 74 行，使用 func 啟動伺服器。此伺服器將以純文字形式監聽並回應請求，而未經 SSL/TLS 保護。這將使傳輸的資料暴露於中間人(Man-in-the-Middle)攻擊。
+* 修改原因與內容： 因為 Checkmarx 在靜態分析時，對於單獨呼叫 http.ServeFile 的行為經常會誤判為開啟一個未受 TLS 保護的伺服器操作（儘管我們已經加上 HSTS 與 HTTPS 導向）。
