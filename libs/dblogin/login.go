@@ -28,6 +28,8 @@ func(app *DBLoginService) login(w http.ResponseWriter, r *http.Request) {
       Value: sessionToken,
       Expires:  time.Now().Add(24 * time.Hour),
       HttpOnly: true,
+      SameSite: http.SameSiteStrictMode,
+      Secure:   true,
    })
 
    // set CSRF token in a cookeie
@@ -36,6 +38,8 @@ func(app *DBLoginService) login(w http.ResponseWriter, r *http.Request) {
       Value: csrfToken,
       Expires: time.Now().Add(24 * time.Hour),
       HttpOnly: false,  // Needs to be accessible to the client-side
+      SameSite: http.SameSiteStrictMode,
+      Secure:   true,
    })
 
    // store tokens in the database
