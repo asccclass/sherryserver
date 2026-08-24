@@ -126,6 +126,9 @@ func(app *Oauth2) Logout(w http.ResponseWriter, r *http.Request) {
       http.Redirect(w, r, url, http.StatusTemporaryRedirect)
    }
    session.Options.MaxAge = -1
+   session.Options.HttpOnly = true
+   session.Options.Secure = true
+   session.Options.SameSite = http.SameSiteStrictMode
    delete(session.Values, "token")
    delete(session.Values, "email")
    w.Header().Del("Authorization")
@@ -157,6 +160,9 @@ func(app *Oauth2) FISAAuthenticate(w http.ResponseWriter, r *http.Request, code 
    if err != nil {
       return w, fmt.Errorf("Get Session Error: %s", err.Error())
    }
+   session.Options.HttpOnly = true
+   session.Options.Secure = true
+   session.Options.SameSite = http.SameSiteStrictMode
    session.Values["email"] = userinfo.Email   // 將Email存入Session
    session.Values["token"] = tokenString      // 將Token存入Session
    if err := session.Save(r, w); err!= nil {
