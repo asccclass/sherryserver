@@ -19,12 +19,16 @@ func(app *DBLoginService) logout(w http.ResponseWriter, r *http.Request) {
       Value: "",
       Expires: time.Now().Add(-time.Hour),
       HttpOnly: true,
+      SameSite: http.SameSiteStrictMode,
+      Secure:   true,
    })
    http.SetCookie(w, &http.Cookie {
       Name:  "csrf_token",
       Value: "",
       Expires: time.Now().Add(-time.Hour),
       HttpOnly: false,
+      SameSite: http.SameSiteStrictMode,
+      Secure:   true,
    })
 
    // clear the tokens from the database
