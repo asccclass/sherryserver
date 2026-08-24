@@ -71,7 +71,13 @@ func(h StaticFileServer)  ServeHTTP(w http.ResponseWriter, r *http.Request) {
          return
       }
       w.Header().Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
-      http.ServeFile(w, r, filepath.Join(h.StaticPath, h.IndexPath))
+      content, err := os.ReadFile(filepath.Join(h.StaticPath, h.IndexPath))
+      if err == nil {
+         w.Header().Set("Content-Type", "text/html; charset=utf-8")
+         w.Write(content)
+      } else {
+         http.Error(w, "File not found", http.StatusNotFound)
+      }
       return
    } else if err != nil {
       http.Error(w, err.Error(), http.StatusInternalServerError)  // 500 internal server error
