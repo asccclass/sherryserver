@@ -4,6 +4,7 @@ import(
    // "io"
    // "os"
    "fmt"
+   "regexp"
    "strings"
    "net/http"
    "io/ioutil"
@@ -25,6 +26,12 @@ type Notify struct {
 }
 
 func(app *Notify) Send(msg *NotifyMessage) {
+   // Validate msg.To to prevent SSRF and Path Traversal
+   validTopic := regexp.MustCompile(`^[a-zA-Z0-9-_]+$`)
+   if !validTopic.MatchString(msg.To) {
+      fmt.Println("Invalid topic format")
+      return
+   }
    http.Post("https://ntfy.sh/" + msg.To, "text/plain", strings.NewReader(msg.Message))
 }
 

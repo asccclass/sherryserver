@@ -2,6 +2,7 @@ package DBLoginService
 
 import(
    "fmt"
+   "html"
    "net/http"
 )
 
@@ -17,5 +18,5 @@ func(app *DBLoginService) protected(w http.ResponseWriter, r *http.Request) {
    }
    name := r.FormValue("username")
 
-   fmt.Fprintf(w, "CSRF validation successful! Welcome, %s", name)
+   fmt.Fprintf(w, "CSRF validation successful! Welcome, %s", html.EscapeString(name))
 }

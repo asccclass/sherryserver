@@ -45,6 +45,9 @@ func(app *Oauth2) UpdateExpTime(tokenString string)(string, error) {
    if err != nil {
       return "", err
    }
+   if !token.Valid {
+      return "", fmt.Errorf("Invalid JWT")
+   }
    // Check if token is expired, Token is expired, extending expiry by 24 hours
    if claims, ok := token.Claims.(jwt.MapClaims); ok {
       if exp, ok := claims["exp"].(float64); ok {

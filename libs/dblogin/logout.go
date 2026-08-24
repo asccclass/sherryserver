@@ -2,6 +2,7 @@ package DBLoginService
 
 import(
    "fmt"
+   "html"
    "time"
    "net/http"
 )
@@ -33,5 +34,5 @@ func(app *DBLoginService) logout(w http.ResponseWriter, r *http.Request) {
    user.CSRFToken = ""
    app.users[name] = user
 
-   fmt.Fprintf(w, "%s logged out successful!", name)
+   fmt.Fprintf(w, "%s logged out successful!", html.EscapeString(name))
 }

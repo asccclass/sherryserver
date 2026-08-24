@@ -66,6 +66,11 @@ func(h StaticFileServer)  ServeHTTP(w http.ResponseWriter, r *http.Request) {
    path = filepath.Join(h.StaticPath, path)
    _, err = os.Stat(path)
    if os.IsNotExist(err) {
+      if r.TLS == nil && r.Header.Get("X-Forwarded-Proto") != "https" {
+         http.Redirect(w, r, "https://"+r.Host+r.URL.String(), http.StatusMovedPermanently)
+         return
+      }
+      w.Header().Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
       http.ServeFile(w, r, filepath.Join(h.StaticPath, h.IndexPath))
       return
    } else if err != nil {
