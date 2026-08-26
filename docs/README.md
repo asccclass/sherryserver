@@ -1,10 +1,10 @@
 # HTTP Server with tools
 
-主要用來作為伺服器使用。移除 grolla 函數依賴，改用內建的 net/http 函數，並重構相關函數。
+此套件可用來快速建立 Go HTTP 伺服器。新版已移除對舊有 grolla 寫法的依賴，改以標準 `net/http` 為主。
 
 ## 需要環境
 * Go 版本：1.25 以上版本
-  - 以便可以使用：[http.CrossOriginProtection](https://pkg.go.dev/net/http#CrossOriginProtection) CROS保護
+  - 可搭配使用 [http.CrossOriginProtection](https://pkg.go.dev/net/http#CrossOriginProtection) 進行 CORS / CSRF 相關保護
 
 ## 環境建置
 ### Dockerfile
@@ -17,7 +17,7 @@ COPY ./app /app
 ENTRYPOINT ["/app/app"]
 ```
 
-### envfile 範例
+### `envfile` 範例
 ```
 SystemName=APIGateway
 PORT=80
@@ -45,16 +45,17 @@ ServerURL=https://www.justdrink.com.tw/apigateway/
 
 ## 使用範例
 
-* server.go
+### `main.go`
 
-```
+```go
 package main
 
 import (
-   "os"
    "fmt"
+   "os"
+
    "github.com/joho/godotenv"
-   "github.com/asccclass/sherryserver"
+   SherryServer "github.com/asccclass/sherryserver"
 )
 
 func main() {
@@ -75,80 +76,82 @@ func main() {
       templateRoot = "www/template"
    }
 
-   server, err := SherryServer.NewServer(":" + port, documentRoot, templateRoot)
+   srv, err := SherryServer.NewServer(":" + port, documentRoot, templateRoot)
    if err != nil {
       panic(err)
    }
-   router := NewRouter(server, documentRoot)
+   router := NewRouter(srv, documentRoot)
    if router == nil {
-      fmt.Println("router return nil")
+      fmt.Println("router is nil")
       return
    }
-   server.Server.Handler = router  // server.CheckCROS(router)  // 需要自行implement, overwrite 預設的
-   server.Start()
+   srv.Server.Handler = router // 若要自訂跨來源保護，可在此包裝 handler
+   srv.Start()
 }
 ```
 
-* router.go
+### `router.go`
 
-```
+```go
 // router.go
 package main
 
 import(
-   "fmt"
    "net/http"
-   "github.com/asccclass/sherryserver"
+
+   SherryServer "github.com/asccclass/sherryserver"
 )
 
 func NewRouter(srv *SherryServer.Server, documentRoot string)(*http.ServeMux) {
    router := http.NewServeMux()
 
-   // Static File server
-   staticfileserver := SherryServer.StaticFileServer{StaticPath: documentRoot, IndexPath: "index.html"}
+   // Static assets
+   staticfileserver := SherryServer.StaticFileServer{StaticPath: documentRoot}
    staticfileserver.AddRouter(router)
 
 /*
-   // App router
+   // API routes
    router.HandleFunc("GET /api/notes", GetAll)
    router.HandleFunc("POST /api/notes", Post)
 
-   router.Handle("/homepage", oauth.Protect(http.HandlerFunc(Home)))
-   router.Handle("/upload", oauth.Protect(http.HandlerFunc(Upload)))
+   // Go template + HTMX pages
+   router.HandleFunc("GET /", HomeTemplate)
+   router.HandleFunc("GET /partials/page/{page}", PagePartial)
 */	
    return router
 }
 ```
 
-## 輸出錯誤方式
-```
+補充：若專案已改為 server-side template + HTMX，`/` 通常會由應用程式路由接手輸出模板頁面；`StaticFileServer` 只負責 CSS、圖片、文件等靜態資源即可。
+
+## 記錄錯誤
+```go
 app.Srv.Logger.Info("Server stopped")
 app.Srv.Logger.Fatal(err.Error(), zap.String("addr", app.Server.Addr))
 ```
 
 ## DB Login Service
 
-```
-## router.go 設定
+```go
+// router.go
 
 import(
-   "github.com/asccclass/sherryserver/libs/dblogin"
+   DBLoginService "github.com/asccclass/sherryserver/libs/dblogin"
 )
-
 
 loginService, err := DBLoginService.NewDBLoginService(srv)
 if err == nil {
-   loginService.AddRouter(router) //  *http.ServeMux)
+   loginService.AddRouter(router)
 }
 ```
 
-## mail 範例
+## Mail 範例
 
-```
+```go
 func main() {
    app, _ := NewSMTPMail()
 
-   // read file
+   // 讀取要內嵌的圖片
    img := "logo_v2.png"
    images, err := app.AddImages(img, []Image{})
    if err != nil {
@@ -156,26 +159,25 @@ func main() {
       return
    }
 
-   subject := "【活動提醒及入場QR Code】114年度國中會考趨勢分析與複習策略專題講座入場通知"
+   subject := "【活動提醒及入場 QR Code】114 年度國中會考趨勢分析與複習策略專題講座入場通知"
    body := fmt.Sprintf(`
       <!DOCTYPE html>
       <html>
          <body>
-         <p>%s,您好<br /><br />感謝您報名參加114年度國中會考趨勢分析與複習策略專題講座。以下為本次活動相關訊息供您參考。<br /><br />活動時間：2 >月 22 日（星期六）13:00～17:50<br>活動地點：中正國中活動中心（臺北市中正區愛國東路 158 號）<br><br>注意事項：<br>
-         1.會議室內禁止錄影音、飲食。<br>
-         2.報到時請出示下方QR Code 供主辦方確認後，方得入場。<br>
-         3.附近較難停車，請提早10分鐘到場並盡量使用大眾交通工具。<br><br>
-         下方為您專屬的報到 QR code:</p>
+         <p>%s，您好<br /><br />感謝您報名參加 114 年度國中會考趨勢分析與複習策略專題講座。以下為本次活動相關訊息供您參考。<br /><br />活動時間：2 月 22 日（星期六）13:00～17:50<br />活動地點：中正國中活動中心（臺北市中正區愛國東路 158 號）<br /><br />注意事項：<br />
+         1. 會議室內禁止錄影音與飲食。<br />
+         2. 報到時請出示下方 QR Code，供主辦方確認後入場。<br />
+         3. 附近較難停車，請提早 10 分鐘到場並盡量使用大眾交通工具。<br /><br />
+         下方為您專屬的報到 QR Code：</p>
          <img src="cid:image-0" alt="內嵌圖片">
-         請您於規定時間內出席<br><br>
-         祝安康,</p>
+         <p>請您於規定時間內出席。<br /><br />
+         敬祝 平安順心</p>
          <p>臺北市國中學生家長會聯合會敬上</p>
          </body>
       </html>
    `, "Jii 哥")
 
    boundary := "boundary_" + fmt.Sprintf("%d", os.Getpid()) // 動態生成 boundary
-
 
    // 完整的 MIME 訊息
    var msg bytes.Buffer
@@ -207,20 +209,20 @@ func main() {
    msg.WriteString(fmt.Sprintf("--%s--\r\n", boundary))
    // SMTP 認證
    if err := app.Send(app.From, msg, true); err != nil {
-      fmt.Println("send err:", err.Error())
+      fmt.Println("send error:", err.Error())
       return
    }
-   fmt.Println("send ok")
+   fmt.Println("send success")
 }
 ```
 
-### 內建函數
+### 內建功能
 * [websocket](websocket.md)
 
 ## 公用程式
-### clean.sh  清除無用的 Docker container
+### `clean.sh` 清除無用的 Docker container
 
-```
+```sh
 #!/bin/sh
 
 docker rmi $(docker images | grep "none" | awk '{print $3}')
