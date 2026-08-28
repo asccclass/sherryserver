@@ -1,0 +1,25 @@
+{{if .Error}}
+<div class="detail-card">
+  <div class="docs-meta">查詢時間：{{.QueriedAt}}</div>
+  <div style="height:10px;"></div>
+  <div class="empty-state">MCP 查詢失敗：{{.Error}}</div>
+</div>
+{{else if .HasResult}}
+<div class="detail-card">
+  <div class="docs-meta">查詢時間：{{.QueriedAt}}</div>
+  <div class="docs-meta">工具：{{if .ToolName}}{{.ToolName}}{{else}}由 MCP 自動選擇{{end}}</div>
+  <div class="docs-meta">端點：{{.Endpoint}}</div>
+  <div style="height:12px;"></div>
+  <div class="detail-summary" style="margin-top:0;padding-top:0;border-top:none;white-space:pre-wrap;">{{.Result}}</div>
+</div>
+{{else if .IsEmpty}}
+<div class="detail-card">
+  <div class="docs-meta">查詢端點：{{if .Endpoint}}{{.Endpoint}}{{else}}未設定{{end}}</div>
+  <div style="height:10px;"></div>
+  <div class="empty-state">請輸入要查詢的文件問題、文件編號或關鍵字，Friday 會透過 MCP 幫你查。</div>
+</div>
+{{else}}
+<div class="detail-card">
+  <div class="empty-state">目前沒有可顯示的查詢結果。</div>
+</div>
+{{end}}

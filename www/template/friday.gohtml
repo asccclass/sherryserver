@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <title>{{.Avatar.DisplayName}} | Gemini Live 語音代理</title>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <style>
+    :root { --bg:#f5f2ea; --panel:rgba(255,255,255,.85); --line:#d7c9ae; --ink:#1f1b16; --muted:#6a6258; --accent:#b65a3c; --accent-2:#2d6c66; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"Segoe UI",sans-serif; color:var(--ink); background:radial-gradient(circle at top left,rgba(182,90,60,.18),transparent 35%),radial-gradient(circle at bottom right,rgba(45,108,102,.16),transparent 40%),var(--bg); }
+    .shell { max-width:1280px; margin:0 auto; padding:24px; }
+    .hero { margin-bottom:20px; }
+    .hero-top { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .hero h1 { margin:0 0 8px; font-size:clamp(2rem,4vw,3.5rem); line-height:.95; letter-spacing:-.04em; }
+    .hero p { margin:0; color:var(--muted); max-width:760px; }
+    .back-link { color:var(--accent-2); text-decoration:none; font-size:.92rem; }
+    .connection-banner { display:inline-flex; align-items:center; gap:10px; padding:10px 14px; border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,.82); backdrop-filter:blur(8px); }
+    .status-light { width:12px; height:12px; border-radius:50%; background:#c94b4b; box-shadow:0 0 0 3px rgba(201,75,75,.15); transition:background 180ms ease,box-shadow 180ms ease,transform 180ms ease; }
+    .status-light.connected { background:#2f9e44; box-shadow:0 0 0 3px rgba(47,158,68,.15),0 0 14px rgba(47,158,68,.35); transform:scale(1.05); }
+    .connection-label { font-size:.92rem; color:var(--muted); }
+    .layout { display:grid; grid-template-columns:320px minmax(0,1fr) 360px; gap:18px; align-items:start; }
+    .card { background:var(--panel); border:1px solid var(--line); border-radius:20px; padding:18px; backdrop-filter:blur(8px); }
+    .card h2 { margin:0 0 12px; font-size:1rem; text-transform:uppercase; letter-spacing:.08em; }
+    label { display:block; margin:0 0 12px; font-size:.9rem; color:var(--muted); }
+    input, textarea, select, button { width:100%; border-radius:14px; border:1px solid var(--line); padding:12px 14px; font:inherit; }
+    textarea { resize:vertical; min-height:90px; }
+    .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .actions { display:flex; gap:10px; margin-top:8px; }
+    .actions button { width:auto; flex:1; cursor:pointer; background:var(--ink); color:white; border:none; }
+    .actions button.secondary { background:white; color:var(--ink); border:1px solid var(--line); }
+    .status { margin-top:12px; color:var(--muted); font-size:.92rem; }
+    .stack { display:grid; gap:12px; }
+    .pane { border:1px solid var(--line); border-radius:16px; background:rgba(255,255,255,.72); padding:12px; }
+    .pane.live-pane { opacity:0; transform:translateY(10px); transition:opacity 180ms ease,transform 180ms ease; }
+    .pane.live-pane.is-visible { opacity:1; transform:translateY(0); }
+    .pane h3 { margin:0 0 8px; font-size:.82rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+    .status-feed { min-height:88px; max-height:120px; overflow:auto; display:flex; flex-direction:column; gap:6px; transition:min-height 180ms ease,max-height 180ms ease; }
+    .status-feed.empty { min-height:28px; max-height:28px; }
+    .status-line { padding:8px 10px; border-radius:12px; background:rgba(45,108,102,.08); color:var(--accent-2); font-size:.92rem; }
+    .transcript-box { min-height:70px; white-space:pre-wrap; line-height:1.45; color:var(--ink); }
+    .transcript-box.empty { color:var(--muted); }
+    .transcript-box.interrupted { color:var(--accent); border-left:4px solid var(--accent); padding-left:10px; font-style:italic; }
+    .feed { height:240px; overflow:auto; display:flex; flex-direction:column; gap:10px; padding-right:6px; }
+    .bubble { max-width:85%; padding:12px 14px; border-radius:16px; line-height:1.4; white-space:pre-wrap; }
+    .bubble.user { align-self:flex-end; background:var(--accent); color:white; }
+    .bubble.assistant { background:#fffdf8; border:1px solid var(--line); }
+    .bubble.system { align-self:center; background:rgba(45,108,102,.08); color:var(--accent-2); border:1px dashed rgba(45,108,102,.3); }
+    .composer { margin-top:14px; display:grid; grid-template-columns:1fr auto auto; gap:10px; }
+    .composer button { width:auto; border:none; cursor:pointer; background:var(--accent-2); color:white; padding-inline:18px; }
+    .composer button.stop { background:var(--accent); }
+    .tiny { margin-top:10px; color:var(--muted); font-size:.82rem; }
+    .avatar-stage { width:100%; aspect-ratio:1 / 1; border-radius:18px; overflow:hidden; background:radial-gradient(circle at 30% 20%,rgba(182,90,60,.18),transparent 30%),linear-gradient(180deg,#f9f5ee 0%,#ece3d2 100%); border:1px solid var(--line); position:relative; }
+    #avatarCanvas { width:100%; height:100%; display:block; }
+    .meter { margin-top:10px; height:12px; background:rgba(31,27,22,.08); border-radius:999px; overflow:hidden; }
+    .meter-fill { height:100%; width:0%; background:linear-gradient(90deg,var(--accent-2),var(--accent)); transition:width 60ms linear; }
+    .diag { display:none; margin-top:10px; font-size:.86rem; color:var(--muted); white-space:pre-wrap; }
+    .avatar-summary { margin:12px 0 14px; padding:12px; border:1px solid var(--line); border-radius:16px; background:rgba(255,253,248,.92); }
+    .avatar-summary h3 { margin:0 0 10px; font-size:.82rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+    .avatar-summary-list { margin:0; padding-left:18px; display:flex; flex-direction:column; gap:6px; }
+    .summary-item { color:var(--ink); font-size:.92rem; line-height:1.4; word-break:break-word; }
+    .summary-label { margin-right:6px; font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+    .summary-value { color:var(--ink); }
+    .docs-header { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; margin-bottom:14px; }
+    .docs-meta { font-size:.88rem; color:var(--muted); line-height:1.5; }
+    .search-box { display:flex; gap:8px; margin-bottom:12px; }
+    .search-box input { flex:1; }
+    .search-box button { width:auto; background:var(--accent-2); color:#fff; border:none; cursor:pointer; }
+    .docs-shell { min-height:320px; }
+    .doc-list { display:flex; flex-direction:column; gap:8px; max-height:560px; overflow:auto; }
+    .doc-item { display:block; text-decoration:none; background:rgba(255,255,255,.72); border:1px solid var(--line); border-radius:14px; padding:12px; color:inherit; }
+    .doc-item:hover { border-color:var(--accent-2); }
+    .doc-title { font-size:.95rem; font-weight:600; margin-bottom:4px; }
+    .doc-meta-row { display:flex; flex-wrap:wrap; gap:8px; font-size:.78rem; color:var(--muted); }
+    .doc-badge { display:inline-block; padding:2px 7px; border-radius:999px; font-size:.72rem; font-weight:700; margin-right:6px; }
+    .db-req{background:#E6F1FB;color:#0C447C}.db-task{background:#E1F5EE;color:#085041}.db-review{background:#EEEDFE;color:#3C3489}.db-pentest{background:#FAECE7;color:#993C1D}.db-agent{background:#FAEEDA;color:#633806}
+    .detail-card { background:rgba(255,255,255,.72); border:1px solid var(--line); border-radius:16px; padding:14px; }
+    .detail-grid { display:grid; gap:8px; font-size:.9rem; color:var(--muted); }
+    .detail-grid strong { color:var(--ink); margin-right:6px; }
+    .detail-summary { margin-top:12px; padding-top:12px; border-top:1px solid var(--line); line-height:1.6; color:var(--ink); }
+    .related-links { display:flex; flex-wrap:wrap; gap:8px; }
+    .related-links a { color:var(--accent-2); text-decoration:none; }
+    .empty-state { padding:20px; border:1px dashed var(--line); border-radius:14px; color:var(--muted); text-align:center; }
+    @media (max-width:1120px) { .layout { grid-template-columns:1fr; } }
+    @media (max-width:860px) { .composer { grid-template-columns:1fr 1fr; } .composer input { grid-column:1 / -1; } .search-box { flex-direction:column; } }
+  </style>
+</head>
+<body data-avatar-id="{{.Avatar.ID}}">
+  <div class="shell">
+    <div class="hero">
+      <div class="hero-top">
+        <a class="back-link" href="/">← 返回公司首頁</a>
+        <div class="connection-banner">
+          <span id="connectionLight" class="status-light" aria-hidden="true"></span>
+          <span id="connectionLabel" class="connection-label">未連線</span>
+        </div>
+      </div>
+      <h1 id="heroName">{{.Avatar.DisplayName}}</h1>
+      <p id="heroSubtitle">{{.Avatar.DisplayName}} 現在同時擔任語音助手與文檔管理者。頁面保留既有 Gemini Live 語音互動，並新增文件工作區供即時查詢。</p>
+    </div>
+
+    <div class="layout">
+      <section class="card">
+        <h2>角色</h2>
+        <div class="avatar-stage">
+          <canvas id="avatarCanvas"></canvas>
+        </div>
+        <div class="meter"><div id="mouthMeter" class="meter-fill"></div></div>
+        <div id="avatarDiag" class="diag">正在載入角色診斷資訊...</div>
+        <div style="height:12px;"></div>
+        <label>角色
+          <select id="avatarSelect"></select>
+        </label>
+        <div class="avatar-summary">
+          <h3>角色摘要</h3>
+          <ul id="avatarSummary" class="avatar-summary-list"></ul>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>對話</h2>
+        <div class="stack">
+          <div class="pane">
+            <h3>狀態</h3>
+            <div id="statusFeed" class="status-feed"></div>
+          </div>
+          <div id="llmPromptPane" class="pane live-pane" hidden>
+            <h3>LLM 提示詞</h3>
+            <div id="llmPrompt" class="transcript-box empty">正在等待語音辨識結果。</div>
+          </div>
+          <div id="inputTranscriptPane" class="pane live-pane" hidden>
+            <h3>你說了</h3>
+            <div id="inputTranscript" class="transcript-box empty">正在等待語音辨識。</div>
+          </div>
+          <div id="outputTranscriptPane" class="pane live-pane" hidden>
+            <h3>助理逐字稿</h3>
+            <div id="outputTranscript" class="transcript-box empty">正在等待助理回覆。</div>
+          </div>
+        </div>
+        <div style="height:12px;"></div>
+        <div id="feed" class="feed"></div>
+        <div class="composer">
+          <input id="textInput" placeholder="輸入文字訊息">
+          <button id="sendBtn">送出</button>
+          <button id="micBtn" class="stop">麥克風關閉</button>
+        </div>
+        <div class="tiny" id="debug">待機中</div>
+      </section>
+
+      <section class="card">
+        <h2>控制</h2>
+        <label>模型<input id="model" value="{{.Avatar.Model}}"></label>
+        <label>LLM 指令<textarea id="systemInstruction">{{.Avatar.SystemInstruction}}</textarea></label>
+        <div class="row">
+          <label>語音
+            <select id="voice">
+              <option value="Puck">Puck</option>
+              <option value="Charon">Charon</option>
+              <option value="Kore">Kore</option>
+              <option value="Fenrir">Fenrir</option>
+              <option value="Aoede">Aoede</option>
+            </select>
+          </label>
+          <label>溫度<input id="temperature" type="number" min="0" max="2" step="0.1" value="{{.TemperatureValue}}"></label>
+        </div>
+        <div class="row">
+          <label><input id="inputTranscription" type="checkbox" {{if .InputTranscriptionOn}}checked{{end}}> 輸入逐字稿</label>
+          <label><input id="outputTranscription" type="checkbox" {{if .OutputTranscriptionOn}}checked{{end}}> 輸出逐字稿</label>
+        </div>
+        <div class="actions">
+          <button id="connectBtn">連線</button>
+          <button id="disconnectBtn" class="secondary">中斷連線</button>
+        </div>
+        <div id="status" class="status">未連線</div>
+        <div id="sessionMeta" class="tiny">工作階段 ID：尚未建立</div>
+        <div class="tiny">後端路由：<code>/ws/live</code>，使用 Gemini Live <code>v1beta</code>。</div>
+      </section>
+    </div>
+  </div>
+  <script type="module" src="/avatar.js"></script>
+  <script type="module" src="/script.js"></script>
+</body>
+</html>

@@ -97,10 +97,10 @@ func(app *Page) PrintPage(p, pageName string, w http.ResponseWriter) {
    s, err := app.ProcessElementTemplate(p, pages)
    if err != nil {
       w.WriteHeader(http.StatusNotFound)
-      fmt.Fprintf(w, "Page " + pageName + " not found(" + err.Error() + ")")
+      fmt.Fprint(w, "Page "+pageName+" not found("+err.Error()+")")
       return
    }
-   fmt.Fprintf(w, s)
+   fmt.Fprint(w, s)
 }
 
 // /www/{pageName}
@@ -109,7 +109,7 @@ func(app *Page) LoadPageFromWeb(w http.ResponseWriter, r *http.Request) {
    page := r.PathValue("pageName")
    if page == "" {
       w.WriteHeader(http.StatusNotFound)
-      fmt.Fprintf(w, "Page name is empty or not found(" + st.Now() + ")")
+      fmt.Fprint(w, "Page name is empty or not found("+st.Now()+")")
       return
    }
    var p []byte
@@ -118,7 +118,7 @@ func(app *Page) LoadPageFromWeb(w http.ResponseWriter, r *http.Request) {
    } else { // 讀取資料內容 *.json
       p, err = os.ReadFile(app.Path + page + ".json")  // 任務區塊
       if err != nil {
-         fmt.Fprintf(w, "Content error (" + err.Error() + ")")
+         fmt.Fprint(w, "Content error ("+err.Error()+")")
       }
    }
    app.PrintPage(string(p), page, w)

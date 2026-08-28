@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <title>一人公司 Agent 團隊</title>
+  <style>
+    :root{--bg:#f6f1e8;--surface-1:#fffaf2;--surface-2:rgba(255,255,255,.82);--border:#dccfb5;--border-strong:#bca98c;--border-accent:#854f0b;--text-primary:#1f1b16;--text-secondary:#675f56;--text-muted:#8b8277;--radius:999px;--font-sans:"Segoe UI",sans-serif}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--font-sans);background:radial-gradient(circle at top left,rgba(181,90,59,.16),transparent 30%),radial-gradient(circle at bottom right,rgba(133,79,11,.12),transparent 35%),var(--bg);color:var(--text-primary)}
+    .root{padding:2rem 1rem 2.5rem;max-width:1080px;margin:0 auto}
+    .hero{margin-bottom:1.5rem;padding:1.25rem 1.25rem 1rem;border:1px solid var(--border);border-radius:24px;background:var(--surface-2);backdrop-filter:blur(8px)}
+    .hero h1{font-size:clamp(2rem,4vw,3.4rem);line-height:.95;letter-spacing:-.04em;margin-bottom:.5rem}
+    .hero p{max-width:760px;color:var(--text-secondary);line-height:1.6}
+    .hero-note{margin-top:.75rem;font-size:.92rem;color:var(--text-muted)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}
+    .card{background:var(--surface-2);border:1px solid var(--border);border-radius:20px;padding:1.15rem;display:flex;flex-direction:column;align-items:flex-start;gap:.75rem;min-height:260px}
+    .card.featured{border-width:2px;border-color:var(--border-accent);box-shadow:0 18px 50px rgba(133,79,11,.12)}
+    .avatar{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px}
+    .av-ceo{background:#EEEDFE}.av-writer{background:#E1F5EE}.av-reviewer{background:#E6F1FB}.av-security{background:#FAECE7}.av-docs{background:#FAEEDA}
+    .name{font-size:1rem;font-weight:700}
+    .badge{font-size:.75rem;padding:3px 8px;border-radius:999px;font-weight:700;display:inline-block}
+    .b-ceo{background:#EEEDFE;color:#3C3489}.b-writer{background:#E1F5EE;color:#085041}.b-reviewer{background:#E6F1FB;color:#0C447C}.b-security{background:#FAECE7;color:#993C1D}.b-docs{background:#FAEEDA;color:#633806}
+    .role{font-size:.9rem;color:var(--text-secondary);line-height:1.55;flex:1}
+    .route-note{font-size:.82rem;color:var(--text-muted);line-height:1.4}
+    .call-btn{width:48px;height:48px;border-radius:50%;border:none;display:flex;align-items:center;justify-content:center;font-size:21px;text-decoration:none;color:#fff;transition:transform .12s ease,opacity .12s ease}
+    .call-btn:hover{transform:scale(1.08)}
+    .cb-ceo{background:#534AB7}.cb-writer{background:#0F6E56}.cb-reviewer{background:#185FA5}.cb-security{background:#993C1D}.cb-docs{background:#854F0B}
+    @media (max-width:640px){.root{padding:1rem .875rem 1.75rem}.card{min-height:auto}}
+  </style>
+</head>
+<body>
+  <main class="root">
+    <section class="hero">
+      <h1>一人公司 Agent 團隊</h1>
+      <p>選擇角色後可查看人設定位；目前所有電話連線入口會先由 Friday 工作台接聽，其中檔管的文件查詢與語音對話功能已整合在同一頁。</p>
+      <div class="hero-note">點選電話按鍵會進入 Friday 的工作頁，並保留既有 Gemini Live 語音互動流程。</div>
+    </section>
+
+    <section class="grid" aria-label="agent roster">
+      {{range .Agents}}
+      <article class="card{{if .Featured}} featured{{end}}">
+        <div class="avatar {{.AvatarClass}}">{{.Emoji}}</div>
+        <div>
+          <div class="name">{{.Name}}</div>
+          <span class="badge b-{{if eq .ID "docs"}}docs{{else}}{{.ID}}{{end}}">{{.Title}}</span>
+        </div>
+        <p class="role">{{.Description}}</p>
+        <p class="route-note">{{if .Featured}}此入口會直接開啟 Friday 的完整文件管理與語音工作台。{{else}}目前對話入口統一導向 Friday 工作台，後續可再依角色擴充專屬頁。{{end}}</p>
+        <a class="call-btn {{.ButtonClass}}" href="{{.Route}}" aria-label="連線 {{.Name}}">📞</a>
+      </article>
+      {{end}}
+    </section>
+  </main>
+</body>
+</html>

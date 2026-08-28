@@ -1,0 +1,59 @@
+{
+  "defaultAvatarId": "friday",
+  "avatars": [
+    {
+      "id": "friday",
+      "displayName": "Friday",
+      "enabled": true,
+      "isDefault": true,
+      "avatarModel": "/avatar/friday.vrm",
+      "model": "gemini-2.5-flash-native-audio-preview-12-2025",
+      "voice": "Puck",
+      "temperature": 0.8,
+      "enableInputTranscription": true,
+      "enableOutputTranscription": true,
+      "querySource": "mcp",
+      "endpoint": "http://localhost:8000/mcp/sse",
+      "mcpToolName": "query_brain_knowledge",
+      "mcpToolArgument": "question",
+      "systemInstruction": "You are a concise assistant. Reply helpfully and naturally. Unless the user explicitly requests another language, answer in Traditional Chinese.",
+      "specialRules": [
+        "收到使用者問題後直接透過 MCP 查詢"
+      ]
+    },
+    {
+      "id": "purple",
+      "displayName": "Purple",
+      "enabled": true,
+      "isDefault": false,
+      "avatarModel": "/avatar/purple.vrm",
+      "model": "gemini-2.5-flash-native-audio-preview-12-2025",
+      "voice": "Kore",
+      "temperature": 0.6,
+      "enableInputTranscription": true,
+      "enableOutputTranscription": true,
+      "querySource": "llm",
+      "systemInstruction": "You are a concise assistant. Reply helpfully and naturally. Unless the user explicitly requests another language, answer in Traditional Chinese.",
+      "specialRules": [
+        "使用自訂 LLM 流程回覆"
+      ]
+    },
+    {
+      "id": "white",
+      "displayName": "White",
+      "enabled": true,
+      "isDefault": false,
+      "avatarModel": "/avatar/white.vrm",
+      "model": "gemini-2.5-flash-native-audio-preview-12-2025",
+      "voice": "Charon",
+      "temperature": 0.7,
+      "enableInputTranscription": true,
+      "enableOutputTranscription": true,
+      "querySource": "llm",
+      "systemInstruction": "You are a concise assistant. Reply helpfully and naturally. Unless the user explicitly requests another language, answer in Traditional Chinese.",
+      "specialRules": [
+        "使用自訂 LLM 流程回覆"
+      ]
+    }
+  ]
+}
