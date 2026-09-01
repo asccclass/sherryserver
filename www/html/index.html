@@ -1,0 +1,290 @@
+
+<h2 class="sr-only">一人公司 Agent 團隊撥號介面——五位員工，點選電話按鈕載入人設開啟對話，檔管支援文件即時查詢</h2>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.root{padding:2rem 1rem 1.5rem;max-width:960px;margin:0 auto}
+.header{text-align:center;margin-bottom:1.75rem}
+.header h1{font-size:20px;font-weight:500;color:var(--text-primary);margin-bottom:4px}
+.header p{font-size:13px;color:var(--text-secondary)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.875rem}
+.card{background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:1.1rem .875rem .875rem;display:flex;flex-direction:column;align-items:center;gap:8px;transition:border-color .15s,box-shadow .15s;cursor:default}
+.card:hover{border-color:var(--border-strong)}
+.card.featured{border-color:var(--border-accent);border-width:1.5px}
+.avatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.av-ceo{background:#EEEDFE}.av-writer{background:#E1F5EE}.av-reviewer{background:#E6F1FB}.av-security{background:#FAECE7}.av-docs{background:#FAEEDA}
+.name{font-size:14px;font-weight:500;color:var(--text-primary);text-align:center}
+.badge{font-size:11px;padding:2px 7px;border-radius:var(--radius);font-weight:500;display:inline-block;margin-top:1px}
+.b-ceo{background:#EEEDFE;color:#3C3489}.b-writer{background:#E1F5EE;color:#085041}.b-reviewer{background:#E6F1FB;color:#0C447C}.b-security{background:#FAECE7;color:#993C1D}.b-docs{background:#FAEEDA;color:#633806}
+.role{font-size:12px;color:var(--text-secondary);text-align:center;line-height:1.4;min-height:28px}
+.call-btn{width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;transition:transform .12s,opacity .12s;margin-top:2px;flex-shrink:0}
+.call-btn:hover{transform:scale(1.08)}.call-btn:active{transform:scale(.95)}
+.cb-ceo{background:#534AB7;color:#fff}.cb-writer{background:#0F6E56;color:#fff}.cb-reviewer{background:#185FA5;color:#fff}.cb-security{background:#993C1D;color:#fff}.cb-docs{background:#854F0B;color:#fff}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;margin-right:4px;animation:pdot 2s ease-in-out infinite}
+@keyframes pdot{0%,100%{opacity:1}50%{opacity:.35}}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.42);display:flex;align-items:center;justify-content:center;z-index:100;padding:1rem;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface-2);border-radius:16px;border:0.5px solid var(--border);width:100%;max-width:540px;display:flex;flex-direction:column;transform:translateY(14px);transition:transform .2s;max-height:88vh}
+.overlay.open .modal{transform:translateY(0)}
+.mhead{padding:.875rem 1.1rem;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px}
+.mavatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.minfo{flex:1}.mname{font-size:14px;font-weight:500;color:var(--text-primary)}.mrole{font-size:12px;color:var(--text-secondary)}
+.mclose{width:30px;height:30px;border-radius:50%;border:0.5px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary)}
+.mclose:hover{background:var(--surface-1)}
+.mbody{padding:1rem 1.1rem;overflow-y:auto;flex:1}
+.tab-row{display:flex;gap:4px;margin-bottom:12px}
+.tab{padding:5px 12px;border-radius:var(--radius);font-size:12px;border:0.5px solid var(--border);background:transparent;cursor:pointer;color:var(--text-secondary);transition:background .12s,color .12s}
+.tab.active{background:var(--surface-1);color:var(--text-primary);border-color:var(--border-strong)}
+.tab:hover:not(.active){background:var(--surface-1)}
+.panel{display:none}.panel.active{display:block}
+.plabel{font-size:11px;font-weight:500;color:var(--text-muted);letter-spacing:.05em;margin-bottom:6px}
+.ptext{font-size:12px;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap;background:var(--surface-1);border-radius:8px;padding:.625rem .875rem;border:0.5px solid var(--border);max-height:220px;overflow-y:auto;font-family:var(--font-mono)}
+.search-box{display:flex;gap:6px;margin-bottom:10px}
+.search-box input{flex:1;padding:7px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface-1);color:var(--text-primary);font-size:13px;font-family:var(--font-sans)}
+.search-box input:focus{outline:none;border-color:var(--border-accent)}
+.search-box button{padding:7px 12px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:var(--surface-1);cursor:pointer;font-size:13px;color:var(--text-primary)}
+.search-box button:hover{background:var(--surface-2)}
+.doc-list{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto}
+.doc-item{background:var(--surface-1);border:0.5px solid var(--border);border-radius:8px;padding:.625rem .875rem;cursor:pointer;transition:border-color .12s}
+.doc-item:hover{border-color:var(--border-strong)}
+.doc-title{font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:2px}
+.doc-meta{font-size:11px;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap}
+.doc-badge{font-size:10px;padding:1px 6px;border-radius:4px;font-weight:500}
+.db-req{background:#E6F1FB;color:#0C447C}.db-task{background:#E1F5EE;color:#085041}.db-review{background:#EEEDFE;color:#3C3489}.db-pentest{background:#FAECE7;color:#993C1D}.db-agent{background:#FAEEDA;color:#633806}
+.doc-detail{background:var(--surface-1);border:0.5px solid var(--border);border-radius:8px;padding:.75rem .875rem;font-size:12px;color:var(--text-secondary);line-height:1.6;display:none}
+.detail-row{display:flex;gap:6px;margin-bottom:4px;font-size:12px}
+.detail-label{color:var(--text-muted);min-width:56px;flex-shrink:0}
+.detail-val{color:var(--text-primary)}
+.back-btn{font-size:12px;color:var(--text-accent);background:none;border:none;cursor:pointer;padding:0 0 8px;display:flex;align-items:center;gap:4px}
+.back-btn:hover{opacity:.75}
+.empty-state{text-align:center;padding:2rem 1rem;color:var(--text-muted);font-size:13px}
+.mfoot{padding:.75rem 1.1rem;border-top:0.5px solid var(--border);display:flex;gap:6px}
+.mfoot button{flex:1;padding:8px 0;border-radius:var(--radius);font-size:13px;cursor:pointer;transition:opacity .12s}
+.btn-copy{background:var(--surface-1);border:0.5px solid var(--border-strong);color:var(--text-primary)}
+.btn-copy:hover{background:var(--surface-2)}
+.btn-chat{border:none;color:#fff;font-weight:500}
+.btn-chat:hover{opacity:.87}
+.ring-wrap{display:none;flex-direction:column;align-items:center;gap:6px;padding:.25rem 0}
+.ring-wrap.active{display:flex}
+.ring-circles{position:relative;width:52px;height:52px;margin:0 auto}
+.rdot{position:absolute;inset:0;border-radius:50%;opacity:.3;animation:rip 1.8s ease-out infinite}
+.rdot:nth-child(2){animation-delay:.6s}.rdot:nth-child(3){animation-delay:1.2s}
+.ricon{position:absolute;inset:8px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff}
+.rtext{font-size:12px;color:var(--text-secondary)}
+@keyframes rip{0%{transform:scale(.5);opacity:.4}100%{transform:scale(1.9);opacity:0}}
+@media(max-width:500px){.grid{grid-template-columns:repeat(2,1fr)}.modal{max-height:92vh}}
+</style>
+
+<div class="root">
+  <div class="header">
+    <h1>一人公司 Agent 團隊</h1>
+    <p><span class="status-dot"></span>5 位員工上線中</p>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="mname">
+  <div class="modal">
+    <div class="mhead">
+      <div class="mavatar" id="mavatar"></div>
+      <div class="minfo">
+        <div class="mname" id="mname"></div>
+        <div class="mrole" id="mrole"></div>
+      </div>
+      <button class="mclose" id="closeBtn" aria-label="關閉"><i class="ti ti-x" style="font-size:15px" aria-hidden="true"></i></button>
+    </div>
+    <div class="mbody" id="mbody">
+      <div class="ring-wrap" id="ringWrap">
+        <div class="ring-circles">
+          <div class="rdot" id="rd1"></div><div class="rdot" id="rd2"></div><div class="rdot" id="rd3"></div>
+          <div class="ricon" id="ricon">📞</div>
+        </div>
+        <div class="rtext" id="rtext">撥號中…</div>
+      </div>
+      <div id="mainContent" style="display:none"></div>
+    </div>
+    <div class="mfoot" id="mfoot" style="display:none">
+      <button class="btn-copy" id="copyBtn" onclick="copyPersona()"><i class="ti ti-copy" style="font-size:14px;margin-right:5px;vertical-align:-2px" aria-hidden="true"></i>複製人設</button>
+      <button class="btn-chat" id="chatBtn" onclick="startChat()"><i class="ti ti-message" style="font-size:14px;margin-right:5px;vertical-align:-2px" aria-hidden="true"></i>開始對話 ↗</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const docs=[
+  {id:'REQ-001',type:'req',title:'使用者登入功能',path:'.ai/inbox/REQ-001-user-auth.md',date:'2026-08-06',status:'進行中',owner:'老闆',related:['TASK-001-a','TASK-001-b'],summary:'需求：使用者登入後可查看過去 30 天操作記錄，分頁顯示每頁 20 筆，支援時間範圍篩選，頁面載入不超過 1 秒。'},
+  {id:'TASK-001-a',type:'task',title:'資料庫 Schema 設計',path:'.ai/tasks/TASK-001-a-db-schema.md',date:'2026-08-06',status:'審查通過',owner:'CEO',related:['REQ-001','REVIEW-TASK-001-a'],summary:'設計 audit_log 資料表結構，包含 user_id、action、timestamp、ip_addr 欄位，並建立複合索引加速查詢。'},
+  {id:'TASK-001-b',type:'task',title:'API 層實作',path:'.ai/tasks/TASK-001-b-api-layer.md',date:'2026-08-06',status:'待執行',owner:'CEO',related:['REQ-001'],summary:'實作 GET /api/audit-logs 端點，支援分頁參數 page/limit 與時間範圍篩選 start_date/end_date。'},
+  {id:'REVIEW-TASK-001-a',type:'review',title:'TASK-001-a 審查報告',path:'.ai/reviews/REVIEW-TASK-001-a.md',date:'2026-08-06',status:'🟢 通過',owner:'找查',related:['TASK-001-a'],summary:'審查通過。發現 1 個建議項：timestamp 欄位建議改用 timestamptz 以支援時區。無阻斷級問題。'},
+  {id:'PENTEST-001',type:'pentest',title:'REQ-001 滲透測試報告',path:'.ai/pentest/PENTEST-001.md',date:'2026-08-06',status:'🟢 通過',owner:'吱吱',related:['REQ-001','TASK-001-a'],summary:'Strix 掃描完成。Critical: 0，High: 0，Medium: 1（速率限制建議強化），Low: 2。整體通過放行。'},
+  {id:'AGENT-CEO',type:'agent',title:'CEO 人設檔',path:'.claude/rules/CEO.md',date:'2026-08-06',status:'v1.0',owner:'老闆',related:[],summary:'執行長人設：負責理解需求、拆解任務、統籌協調，不寫代碼、不審查代碼、不執行滲透測試。'},
+  {id:'AGENT-WRITER',type:'agent',title:'寫手人設檔',path:'.claude/rules/寫手.md',date:'2026-08-06',status:'v1.0',owner:'老闆',related:[],summary:'程式設計師人設：執行 CEO 任務書、撰寫代碼、自我初審後提交找查。'},
+  {id:'AGENT-REVIEWER',type:'agent',title:'找查人設檔',path:'.claude/rules/找查.md',date:'2026-08-06',status:'v1.0',owner:'老闆',related:[],summary:'審查員人設：依審查清單逐條檢查，阻斷級或重要級問題退回寫手，通過後移交吱吱。'},
+  {id:'AGENT-SECURITY',type:'agent',title:'吱吱人設檔',path:'.claude/rules/吱吱.md',date:'2026-08-06',status:'v1.0',owner:'老闆',related:[],summary:'資安健檢師人設：使用 Strix 執行 OWASP Top 10 滲透測試，Critical/High 阻斷放行。'},
+  {id:'AGENT-DOCS',type:'agent',title:'檔管人設檔',path:'.claude/rules/檔管.md',date:'2026-08-06',status:'v1.0',owner:'老闆',related:[],summary:'文檔管理者人設：統一歸檔、索引、查詢所有工作文件，維護 .ai/index.md 主索引。'},
+];
+
+const typeLabel={req:'需求書',task:'任務書',review:'審查報告',pentest:'滲透報告',agent:'人設檔'};
+const typeBadge={req:'db-req',task:'db-task',review:'db-review',pentest:'db-pentest',agent:'db-agent'};
+
+const agents=[
+  {id:'ceo',emoji:'🧠',name:'CEO',title:'執行長',desc:'統籌規劃、拆解任務、協調各 Agent',av:'av-ceo',cb:'cb-ceo',rc:'#534AB7',
+   persona:`# 角色：CEO（執行長）\n\n你是一人公司的 CEO，唯一負責思考與規劃的決策者。不寫代碼，只把老闆的想法轉化成清晰的任務藍圖，分派給下屬 Agent 執行。\n\n## 核心職責\n1. 理解意圖：完整理解需求，主動提問補齊模糊處，不猜測\n2. 澄清確認：用自己的話複述理解，老闆確認後再繼續\n3. 拆解任務：將需求拆成具體、獨立、可驗證的子任務\n4. 安排分工：任務給「寫手」→「找查」審查→「吱吱」滲透→「檔管」歸檔\n5. 追蹤進度：維護 .ai/log.md，每次狀態改變記一行\n6. 向老闆回報：用繁體中文彙報現況與下一步\n\n## 行為守則\n- 先想清楚，再開口；不越權；主動提問不假設\n- 用繁體中文與老闆溝通\n\n❌ 不寫代碼 ❌ 不審查代碼 ❌ 不執行滲透測試 ❌ 不管文件歸檔`},
+  {id:'writer',emoji:'✍️',name:'寫手',title:'程式設計師',desc:'執行任務書、撰寫代碼、自我初審後提交',av:'av-writer',cb:'cb-writer',rc:'#0F6E56',
+   persona:`# 角色：寫手（程式設計師）\n\n你是程式設計師「寫手」，將 CEO 的任務書轉化成高品質代碼。代碼沒通過審查就重寫，沒有例外。\n\n## 核心職責\n1. 閱讀任務書，不清楚先向 CEO 確認\n2. 撰寫代碼：乾淨、可讀、有適當的註解\n3. 自我初審：邏輯、邊界條件、明顯 bug\n4. 提交給「找查」：附上實作說明\n5. 根據回饋修改，說明改了什麼、為什麼\n\n## 代碼標準\n命名清晰、單一職責、錯誤處理完整、無魔術數字、適量註解\n\n❌ 不規劃任務 ❌ 不審查別人代碼 ❌ 不對設計發表意見`},
+  {id:'reviewer',emoji:'🔍',name:'找查',title:'程式審查員',desc:'全面審查代碼品質，有問題退回寫手',av:'av-reviewer',cb:'cb-reviewer',rc:'#185FA5',
+   persona:`# 角色：找查（程式審查員）\n\n你是程式審查員「找查」，代碼進入生產環境前的最後防線。對代碼沒有情感，只有標準。\n\n## 審查清單（必查）\n🔴 正確性：邏輯錯誤、邊界條件、非同步競態\n🔴 安全性：SQL injection、XSS、硬編碼敏感資料\n🟡 可靠性：錯誤處理、資源釋放\n🟡 可維護性：命名、函式長度、重複代碼\n\n## 嚴重程度\n🚨 阻斷級：功能失效、安全漏洞、資料損失\n⚠️ 重要級：潛在風險或維護困難\n💡 建議級：更好的寫法，不阻斷放行\n\n放行後通知 CEO 移交「吱吱」。\n\n❌ 不規劃任務 ❌ 不直接修改代碼 ❌ 不放水`},
+  {id:'security',emoji:'🛡️',name:'吱吱',title:'資安健檢師',desc:'白帽滲透測試（Strix），資安最後一關',av:'av-security',cb:'cb-security',rc:'#993C1D',
+   persona:`# 角色：吱吱（資安健檢師）\n\n你是資安健檢師「吱吱」，白帽駭客角色。使用 Strix 對找查通過的代碼發動滲透測試。\n\n## Strix 工具\npip install strix-ai\nstrix scan --target ./your-app --output report\nstrix scan --target https://your-app.local --output report\nstrix view\n\n## 測試範圍（OWASP Top 10）\nA01 Broken Access Control / A02 Cryptographic Failures\nA03 Injection / A04 Insecure Design / A05 Misconfiguration\nA06 Vulnerable Components / A07 Auth Failures\nA08 Integrity Failures / A09 Logging Failures / A10 SSRF\n\n## 放行標準\n無 Critical（CVSS≥9.0）或 High（7.0-8.9）才放行。\nMedium 需與 CEO 確認是否阻斷。\n\n❌ 不規劃任務 ❌ 不做代碼品質審查 ❌ 不修代碼`},
+  {id:'docs',emoji:'📁',name:'檔管',title:'文檔管理者',desc:'統一歸檔、索引、即時查詢所有工作文件',av:'av-docs',cb:'cb-docs',rc:'#854F0B',featured:true,
+   persona:`# 角色：檔管（文檔管理者）\n\n你是文檔管理者「檔管」，公司所有工作文件的守門人。統一歸檔、分類、索引，並隨時回應查詢請求。讓公司的知識資產永遠可以被找到。\n\n## 管轄範圍\n.ai/inbox/     → 需求書（REQ-xxx）\n.ai/tasks/     → 任務書（TASK-xxx）\n.ai/reviews/   → 審查報告（REVIEW-xxx）\n.ai/pentest/   → 滲透報告（PENTEST-xxx）\n.ai/log.md     → 進度日誌\n.claude/rules/ → 人設檔\n\n## 核心職責\n1. 接收登記：文件產出後即時更新索引\n2. 維護 .ai/index.md：主索引表格\n3. 即時查詢：精確回傳路徑與摘要\n4. 出處追溯：說明文件來源脈絡與修訂歷史\n5. 定期整理：偵測孤立或命名不符文件，回報 CEO\n\n## 查詢方式\n任何成員可用自然語言查詢：\n「REQ-001 的所有相關文件」\n「最新的滲透報告在哪」\n「找查 TASK-001-a 的審查結論」\n\n❌ 不寫代碼 ❌ 不審查代碼 ❌ 不修改文件實質內容`},
+];
+
+const grid=document.getElementById('grid');
+agents.forEach(a=>{
+  const c=document.createElement('div');
+  c.className='card'+(a.featured?' featured':'');
+  c.innerHTML=`<div class="avatar ${a.av}">${a.emoji}</div>
+    <div style="text-align:center"><div class="name">${a.name}</div><span class="badge b-${a.id==='docs'?'docs':a.id}">${a.title}</span></div>
+    <div class="role">${a.desc}</div>
+    <button class="call-btn ${a.cb}" onclick="openCall('${a.id}')" aria-label="撥打 ${a.name}"><i class="ti ti-phone" aria-hidden="true"></i></button>`;
+  grid.appendChild(c);
+});
+
+let cur=null;
+
+function openCall(id){
+  cur=agents.find(a=>a.id===id);
+  const a=cur;
+  const mav=document.getElementById('mavatar');
+  mav.className='mavatar '+a.av; mav.textContent=a.emoji;
+  document.getElementById('mname').textContent=a.name+'（'+a.title+'）';
+  document.getElementById('mrole').textContent=a.desc;
+  document.getElementById('ringWrap').classList.add('active');
+  document.getElementById('mainContent').style.display='none';
+  document.getElementById('mfoot').style.display='none';
+  document.getElementById('rtext').textContent='撥號中…';
+  ['rd1','rd2','rd3'].forEach(id=>{document.getElementById(id).style.background=a.rc});
+  document.getElementById('ricon').style.background=a.rc;
+  document.getElementById('chatBtn').style.background=a.rc;
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('closeBtn').focus();
+
+  setTimeout(()=>{document.getElementById('rtext').textContent='接通中，載入人設…'},800);
+  setTimeout(()=>{
+    document.getElementById('ringWrap').classList.remove('active');
+    const content=document.getElementById('mainContent');
+    content.innerHTML= a.id==='docs' ? buildDocsContent(a) : buildPersonaContent(a);
+    content.style.display='block';
+    document.getElementById('mfoot').style.display='flex';
+    if(a.id==='docs') initDocSearch();
+  },1800);
+}
+
+function buildPersonaContent(a){
+  return `<div class="plabel">人設 System Prompt</div>
+    <div class="ptext">${escHtml(a.persona)}</div>`;
+}
+
+function buildDocsContent(a){
+  return `<div class="tab-row">
+      <button class="tab active" onclick="switchTab(this,'tPersona')">人設</button>
+      <button class="tab" onclick="switchTab(this,'tDocs')">文件查詢</button>
+    </div>
+    <div class="panel active" id="tPersona">
+      <div class="plabel">人設 System Prompt</div>
+      <div class="ptext">${escHtml(a.persona)}</div>
+    </div>
+    <div class="panel" id="tDocs">
+      <div class="search-box">
+        <input type="text" id="docSearch" placeholder="搜尋文件 ID、標題、類型…" autocomplete="off"/>
+        <button onclick="runSearch()"><i class="ti ti-search" style="font-size:14px;vertical-align:-2px" aria-hidden="true"></i></button>
+      </div>
+      <div id="docResults"></div>
+    </div>`;
+}
+
+function initDocSearch(){
+  renderDocs(docs);
+  const inp=document.getElementById('docSearch');
+  if(inp) inp.addEventListener('keydown',e=>{if(e.key==='Enter')runSearch()});
+}
+
+function switchTab(btn,panelId){
+  btn.closest('.tab-row').querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(panelId).classList.add('active');
+}
+
+function runSearch(){
+  const q=(document.getElementById('docSearch').value||'').toLowerCase().trim();
+  const filtered=q?docs.filter(d=>
+    d.id.toLowerCase().includes(q)||
+    d.title.toLowerCase().includes(q)||
+    typeLabel[d.type].includes(q)||
+    d.status.toLowerCase().includes(q)||
+    d.owner.includes(q)
+  ):docs;
+  renderDocs(filtered);
+}
+
+function renderDocs(list){
+  const el=document.getElementById('docResults');
+  if(!el)return;
+  if(!list.length){el.innerHTML='<div class="empty-state"><i class="ti ti-file-off" style="font-size:24px;display:block;margin-bottom:6px" aria-hidden="true"></i>找不到相符的文件</div>';return;}
+  el.innerHTML='<div class="doc-list">'+list.map(d=>`
+    <div class="doc-item" onclick="showDetail('${d.id}')">
+      <div class="doc-title"><span class="doc-badge ${typeBadge[d.type]}">${typeLabel[d.type]}</span> ${escHtml(d.title)}</div>
+      <div class="doc-meta"><span>${d.id}</span><span>${d.date}</span><span>${d.status}</span><span>產出：${d.owner}</span></div>
+    </div>`).join('')+'</div>';
+}
+
+function showDetail(id){
+  const d=docs.find(x=>x.id===id);
+  if(!d)return;
+  const el=document.getElementById('docResults');
+  const relHtml=d.related.length?d.related.map(r=>`<span onclick="showDetail('${r}')" style="color:var(--text-accent);cursor:pointer;text-decoration:underline;margin-right:6px">${r}</span>`).join(''):'—';
+  el.innerHTML=`
+    <button class="back-btn" onclick="runSearch()"><i class="ti ti-arrow-left" style="font-size:13px" aria-hidden="true"></i> 返回列表</button>
+    <div style="background:var(--surface-1);border:0.5px solid var(--border);border-radius:8px;padding:.75rem .875rem">
+      <div style="font-size:14px;font-weight:500;color:var(--text-primary);margin-bottom:10px">${escHtml(d.title)}</div>
+      <div class="detail-row"><span class="detail-label">文件 ID</span><span class="detail-val">${d.id}</span></div>
+      <div class="detail-row"><span class="detail-label">類型</span><span class="detail-val"><span class="doc-badge ${typeBadge[d.type]}">${typeLabel[d.type]}</span></span></div>
+      <div class="detail-row"><span class="detail-label">路徑</span><span class="detail-val" style="font-family:var(--font-mono);font-size:11px">${escHtml(d.path)}</span></div>
+      <div class="detail-row"><span class="detail-label">產出者</span><span class="detail-val">${d.owner}</span></div>
+      <div class="detail-row"><span class="detail-label">日期</span><span class="detail-val">${d.date}</span></div>
+      <div class="detail-row"><span class="detail-label">狀態</span><span class="detail-val">${d.status}</span></div>
+      <div class="detail-row"><span class="detail-label">相關文件</span><span class="detail-val">${relHtml}</span></div>
+      <div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border)">
+        <div class="plabel" style="margin-bottom:4px">內容摘要</div>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.6">${escHtml(d.summary)}</div>
+      </div>
+    </div>`;
+}
+
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function closeModal(){document.getElementById('overlay').classList.remove('open');cur=null;}
+document.getElementById('closeBtn').addEventListener('click',closeModal);
+document.getElementById('overlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+function copyPersona(){
+  if(!cur)return;
+  const btn=document.getElementById('copyBtn');
+  navigator.clipboard.writeText(cur.persona).then(()=>{
+    btn.innerHTML='<i class="ti ti-check" style="font-size:14px;margin-right:5px;vertical-align:-2px" aria-hidden="true"></i>已複製';
+    setTimeout(()=>{btn.innerHTML='<i class="ti ti-copy" style="font-size:14px;margin-right:5px;vertical-align:-2px" aria-hidden="true"></i>複製人設';},2000);
+  });
+}
+
+function startChat(){
+  if(!cur)return;
+  const prompt=`請載入以下人設，從現在起你扮演這個角色：\n\n${cur.persona}\n\n請確認你已理解角色設定，並等待我的第一個任務。`;
+  sendPrompt(prompt);
+  closeModal();
+}
+</script>

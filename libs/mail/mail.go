@@ -1,13 +1,14 @@
 package MailService
 
 import (
-   "os"
-   "fmt"
    "bytes"
-   "strings"
-   "net/smtp"
-   "path/filepath"
    "encoding/base64"
+   "fmt"
+   "net/smtp"
+   "os"
+   "path/filepath"
+   "strconv"
+   "strings"
 )
 
 // MIME 圖片
@@ -27,11 +28,11 @@ type SMTPAccount struct {
 }
 
 type SMTPMail struct {
-   CFG		Config
+   CFG *Config
 }
 
 // 根據檔案副檔名判斷 MIME 類型
-func(app *SMTPMail) getMineType(imageName string)(string) {
+func(app *SMTPMail) getMineType(imageName string) string {
    ext := strings.ToLower(filepath.Ext(imageName))
    contentType := ""
    switch ext {
@@ -48,7 +49,7 @@ func(app *SMTPMail) getMineType(imageName string)(string) {
 }
 
 // SMTP 認證 && 寄信
-func(app *SMTPMail) Send(to string, msg bytes.Buffer, needAuth bool)(error) {
+func(app *SMTPMail) Send(to string, msg bytes.Buffer, needAuth bool) error {
    var auth smtp.Auth
    acc, err := app.SelectMinCntConfig()
    if err != nil {
@@ -58,18 +59,19 @@ func(app *SMTPMail) Send(to string, msg bytes.Buffer, needAuth bool)(error) {
       auth = smtp.PlainAuth("", acc.User, acc.Password, acc.Host)
    }
    // 寄送郵件 fix)使用 msg.Bytes() 獲取 []byte
-   if err := smtp.SendMail(acc.Host + ":" + acc.Port, auth, acc.User, []string{to}, msg.Bytes() ); err != nil {
-      return fmt.Errorf("寄送郵件失敗:", err.Error())
+   addr := acc.Host + ":" + strconv.Itoa(acc.Port)
+   if err := smtp.SendMail(addr, auth, acc.User, []string{to}, msg.Bytes()); err != nil {
+      return fmt.Errorf("寄送郵件失敗: %w", err)
    }
    return nil
 }
 
 // 加入檔案
-func(app *SMTPMail) AddImages(img string, images []Image)([]Image, error) {
+func(app *SMTPMail) AddImages(img string, images []Image) ([]Image, error) {
    // read file
    imageData, err := os.ReadFile(img)
    if err != nil {
-      return images, fmt.Errorf("讀取圖片失敗:", err)
+      return images, fmt.Errorf("讀取圖片失敗: %w", err)
    }
    // 將圖片轉為 base64 編碼
    imageBase64 := base64.StdEncoding.EncodeToString(imageData)
@@ -83,10 +85,9 @@ func(app *SMTPMail) AddImages(img string, images []Image)([]Image, error) {
    return images, nil
 }
 
-func NewSMTPMail()(*SMTPMail, error) {
-   sm := &SMTPMail {
-   }
-   cfg, err := sm.LoadConfig()  // 取得SMTP資訊
+func NewSMTPMail() (*SMTPMail, error) {
+   sm := &SMTPMail{}
+   cfg, err := sm.LoadConfig()
    if err != nil {
       return nil, err
    }

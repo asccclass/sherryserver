@@ -2,6 +2,10 @@
 
 此套件可用來快速建立 Go HTTP 伺服器。新版已移除對舊有 grolla 寫法的依賴，改以標準 `net/http` 為主。
 
+## 文件索引
+
+* [Avatar Query Routing](avatar-query-routing.md)
+
 ## 需要環境
 * Go 版本：1.25 以上版本
   - 可搭配使用 [http.CrossOriginProtection](https://pkg.go.dev/net/http#CrossOriginProtection) 進行 CORS / CSRF 相關保護
