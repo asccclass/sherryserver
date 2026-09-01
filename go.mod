@@ -1,6 +1,6 @@
 module github.com/asccclass/sherryserver
 
-go 1.24.1
+go 1.27.0
 
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
