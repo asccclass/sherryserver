@@ -32,6 +32,12 @@ DBPath=/app/data/
 OriginAllowList=https://www.justdrink.com.tw;http://www.justdrink.com.tw;https://finance.justdrink.com.tw;https://www.jhupat.org.tw
 AllowMethods=POST;GET;DELETE;PUT
 
+# Cookie session signing key. Generate your own value; do not reuse examples.
+# Example: openssl rand -base64 32
+SessionCookieAuthKey=replace-with-at-least-32-random-bytes
+# Optional cookie encryption key. Must be exactly 16, 24, or 32 bytes if set.
+# SessionCookieEncryptionKey=replace-with-32-random-bytes
+
 DocumentRoot=www/html
 TemplateRoot=www/template/
 TempRoot=www/temp
