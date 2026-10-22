@@ -88,7 +88,84 @@ go test ./examples/youtube-live-chat/...
 
 ---
 
-## 7) 限制與注意事項
+## 7) 本地 mock external websocket server（手動驗證流程指令）
+
+可用以下指令先在本機啟一個簡單的外部 WebSocket server（收到訊息後回傳 JSON）：
+
+```bash
+cat > /tmp/mock-external-ws.go <<'EOF'
+package main
+
+import (
+  "context"
+  "encoding/json"
+  "log"
+  "net/http"
+  "time"
+
+  "github.com/coder/websocket"
+)
+
+func main() {
+  http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+    c, err := websocket.Accept(w, r, nil)
+    if err != nil {
+      log.Println("accept error:", err)
+      return
+    }
+    defer c.CloseNow()
+
+    ctx := c.CloseRead(r.Context())
+    for {
+      _, data, err := c.Read(ctx)
+      if err != nil {
+        log.Println("read end:", err)
+        return
+      }
+      log.Printf("recv: %s\n", string(data))
+
+      resp, _ := json.Marshal(map[string]string{
+        "type": "ack",
+        "echo": string(data),
+        "at":   time.Now().UTC().Format(time.RFC3339),
+      })
+      if err := c.Write(context.Background(), websocket.MessageText, resp); err != nil {
+        log.Println("write error:", err)
+        return
+      }
+    }
+  })
+
+  log.Println("mock external ws server on :9000/ws")
+  log.Fatal(http.ListenAndServe(":9000", nil))
+}
+EOF
+
+cd /home/runner/work/sherryserver/sherryserver/examples/youtube-live-chat
+go run /tmp/mock-external-ws.go
+```
+
+再開另一個終端機啟動本範例：
+
+```bash
+cd /home/runner/work/sherryserver/sherryserver/examples/youtube-live-chat
+cp .env.example envfile
+
+# 確認至少以下設定（其餘可沿用預設）
+# SessionCookieAuthKey=至少32 bytes
+# EXTERNAL_WS_URL=ws://127.0.0.1:9000/ws
+# EXTERNAL_WS_ALLOWED_HOSTS=127.0.0.1
+
+go run .
+```
+
+最後在瀏覽器開 `http://127.0.0.1:8080`，輸入 `videoId` + `apiKey` 後按「開始」：
+- mock server 終端機會看到 `recv: ...`
+- UI 事件區會看到 `sent`（本地送出）與 `external`（mock ack 回傳）
+
+---
+
+## 8) 限制與注意事項
 
 - YouTube API 有 quota 限制，輪詢頻率依 `pollingIntervalMillis`。
 - 本範例假設外部 WebSocket server 接收文字 JSON frame。
