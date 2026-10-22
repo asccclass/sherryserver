@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -104,19 +106,32 @@ type app struct {
 	defaultAPIKey string
 	defaultWSURL  string
 	defaultVideo  string
+	allowedHosts  map[string]struct{}
 
 	mu  sync.Mutex
 	job *liveChatJob
 }
 
 func newApp(logger *zap.Logger) *app {
+	defaultWSURL := os.Getenv("EXTERNAL_WS_URL")
+	allowHosts := parseAllowedHosts(os.Getenv("EXTERNAL_WS_ALLOWED_HOSTS"))
+	if len(allowHosts) == 0 && defaultWSURL != "" {
+		if u, err := url.Parse(defaultWSURL); err == nil {
+			host := strings.ToLower(u.Hostname())
+			if host != "" {
+				allowHosts[host] = struct{}{}
+			}
+		}
+	}
+
 	return &app{
 		logger:        logger,
 		hub:           newUIHub(logger),
 		yt:            youtube.NewClient(nil),
 		defaultAPIKey: os.Getenv("YOUTUBE_API_KEY"),
-		defaultWSURL:  os.Getenv("EXTERNAL_WS_URL"),
+		defaultWSURL:  defaultWSURL,
 		defaultVideo:  os.Getenv("YOUTUBE_VIDEO_ID"),
+		allowedHosts:  allowHosts,
 	}
 }
 
@@ -152,6 +167,10 @@ func (a *app) handleStart(w http.ResponseWriter, r *http.Request) {
 
 	if req.VideoID == "" || req.APIKey == "" || req.ExternalWSURL == "" {
 		writeError(w, http.StatusBadRequest, "videoId、apiKey、externalWsUrl 都必須提供")
+		return
+	}
+	if err := validateExternalWSURL(req.ExternalWSURL, a.allowedHosts); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -367,6 +386,39 @@ func firstNonEmpty(v ...string) string {
 		}
 	}
 	return ""
+}
+
+func parseAllowedHosts(raw string) map[string]struct{} {
+	hosts := map[string]struct{}{}
+	for _, item := range strings.Split(raw, ",") {
+		host := strings.ToLower(strings.TrimSpace(item))
+		if host == "" {
+			continue
+		}
+		hosts[host] = struct{}{}
+	}
+	return hosts
+}
+
+func validateExternalWSURL(raw string, allowedHosts map[string]struct{}) error {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return fmt.Errorf("externalWsUrl 格式不正確: %w", err)
+	}
+	if u.Scheme != "ws" && u.Scheme != "wss" {
+		return errors.New("externalWsUrl 只允許 ws 或 wss")
+	}
+	host := strings.ToLower(u.Hostname())
+	if host == "" {
+		return errors.New("externalWsUrl 缺少 host")
+	}
+	if len(allowedHosts) == 0 {
+		return errors.New("未設定可允許的 EXTERNAL_WS_ALLOWED_HOSTS")
+	}
+	if _, ok := allowedHosts[host]; !ok {
+		return fmt.Errorf("externalWsUrl host %q 不在允許清單", host)
+	}
+	return nil
 }
 
 func main() {
