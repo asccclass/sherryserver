@@ -51,6 +51,31 @@ ServerURL=https://www.justdrink.com.tw/apigateway/
 
 ## 使用範例
 
+### 完整範例：YouTube 直播留言分句轉送
+
+已新增可執行範例於：
+
+- `examples/youtube-live-chat/`
+
+範例內容：
+- Web UI 輸入 `videoId` / `apiKey` 開始與停止抓取留言
+- 輪詢 YouTube Data API v3（`liveBroadcasts.list` / `liveChatMessages.list`）
+- 留言分句後透過 WebSocket 傳送到外部 server
+- UI 即時顯示 sent/status/error/external 事件
+
+快速啟動：
+
+```bash
+cd /home/runner/work/sherryserver/sherryserver/examples/youtube-live-chat
+cp .env.example envfile
+# 編輯 envfile：至少填入 SessionCookieAuthKey、YOUTUBE_API_KEY、EXTERNAL_WS_URL
+go run .
+```
+
+更多設定、測試與 mock external websocket 手動驗證流程，請見：
+
+- `examples/youtube-live-chat/README.md`
+
 ### `main.go`
 
 ```go
