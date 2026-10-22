@@ -27,9 +27,8 @@ const (
 )
 
 type startRequest struct {
-	VideoID       string `json:"videoId"`
-	APIKey        string `json:"apiKey"`
-	ExternalWSURL string `json:"externalWsUrl"`
+	VideoID string `json:"videoId"`
+	APIKey  string `json:"apiKey"`
 }
 
 type uiEvent struct {
@@ -163,18 +162,18 @@ func (a *app) handleStart(w http.ResponseWriter, r *http.Request) {
 	}
 	req.VideoID = firstNonEmpty(req.VideoID, a.defaultVideo)
 	req.APIKey = firstNonEmpty(req.APIKey, a.defaultAPIKey)
-	req.ExternalWSURL = firstNonEmpty(req.ExternalWSURL, a.defaultWSURL)
+	externalWSURL := a.defaultWSURL
 
-	if req.VideoID == "" || req.APIKey == "" || req.ExternalWSURL == "" {
-		writeError(w, http.StatusBadRequest, "videoId、apiKey、externalWsUrl 都必須提供")
+	if req.VideoID == "" || req.APIKey == "" || externalWSURL == "" {
+		writeError(w, http.StatusBadRequest, "videoId、apiKey 與環境變數 EXTERNAL_WS_URL 都必須提供")
 		return
 	}
-	if err := validateExternalWSURL(req.ExternalWSURL, a.allowedHosts); err != nil {
+	if err := validateExternalWSURL(externalWSURL, a.allowedHosts); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	if err := a.startJob(req); err != nil {
+	if err := a.startJob(req, externalWSURL); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -186,7 +185,7 @@ func (a *app) handleStop(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "stopped"})
 }
 
-func (a *app) startJob(req startRequest) error {
+func (a *app) startJob(req startRequest, externalWSURL string) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
@@ -201,7 +200,7 @@ func (a *app) startJob(req startRequest) error {
 		cancel:        cancel,
 		videoID:       req.VideoID,
 		apiKey:        req.APIKey,
-		externalWSURL: req.ExternalWSURL,
+		externalWSURL: externalWSURL,
 	}
 	a.job = job
 	a.hub.broadcast(uiEvent{Type: "status", Data: map[string]string{"message": "直播工作已啟動", "videoId": req.VideoID}})

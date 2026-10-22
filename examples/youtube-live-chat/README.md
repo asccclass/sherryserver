@@ -41,7 +41,7 @@ go run .
 - `PORT`：服務埠（預設 8080）
 - `YOUTUBE_API_KEY`：YouTube Data API v3 金鑰
 - `YOUTUBE_VIDEO_ID`：預設直播影片 ID（可在 UI 覆蓋）
-- `EXTERNAL_WS_URL`：外部 WebSocket server URL（可在 UI 覆蓋）
+- `EXTERNAL_WS_URL`：外部 WebSocket server URL（由後端環境變數提供）
 - `EXTERNAL_WS_ALLOWED_HOSTS`：可選，允許的外部 WebSocket host 清單（逗號分隔）；未設定時預設只允許 `EXTERNAL_WS_URL` 的 host
 - `SessionCookieAuthKey`：sherryserver 必要設定（至少 32 bytes）
 - `SessionCookieEncryptionKey`：可選（16/24/32 bytes）
@@ -51,7 +51,7 @@ go run .
 ## 4) UI 使用方式
 
 1. 開啟首頁。
-2. 輸入 `videoId`、`apiKey`、`externalWsUrl`（若 envfile 已設定可只填 videoId）。
+2. 輸入 `videoId`、`apiKey`（若 envfile 已設定可只填 videoId）。
 3. 按「開始」啟動工作；按「停止」中止。
 4. 下方事件區會看到：
    - `status`：狀態事件

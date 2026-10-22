@@ -35,8 +35,7 @@ document.getElementById('startBtn').addEventListener('click', async () => {
   try {
     await postJSON('/api/start', {
       videoId: videoIdEl.value.trim(),
-      apiKey: apiKeyEl.value.trim(),
-      externalWsUrl: externalWsUrlEl.value.trim(),
+      apiKey: apiKeyEl.value.trim()
     });
     appendEvent('[status] 已送出開始請求');
   } catch (err) {
