@@ -51,6 +51,62 @@ ServerURL=https://www.justdrink.com.tw/apigateway/
 
 ## 使用範例
 
+### HTTPS 與自動 TLS 憑證
+
+預設關閉自動 TLS；`NewServer()`／`Start()` 的呼叫方式不變。設定在 `NewServer()` 載入 `envfile` 後讀取，系統環境變數優先於檔案；修改設定須重新啟動服務。
+
+| 模式 | 設定 |
+| --- | --- |
+| HTTP | `TLSAutoEnabled=false`，不提供完整固定憑證路徑 |
+| 固定憑證 HTTPS | `TLSAutoEnabled=false`，提供 `sslCertification` 與 `sslKeyfile` |
+| 自動取得與續期 HTTPS | `TLSAutoEnabled=true`，填妥以下自動 TLS 設定，移除兩個固定憑證變數 |
+
+固定憑證範例：
+
+```dotenv
+TLSAutoEnabled=false
+sslCertification=/app/certs/fullchain.pem
+sslKeyfile=/app/certs/privkey.pem
+```
+
+自動 TLS 範例（以自己的網域取代範例值）：
+
+```dotenv
+PORT=443
+TLSAutoEnabled=true
+TLSAutoDomains=example.com,www.example.com
+TLSAutoCacheDir=/app/data/autocert
+TLSAutoEmail=admin@example.com
+# 閱讀並同意所選 ACME CA 的服務條款後設為 true
+TLSAutoAcceptTOS=true
+# 首次部署使用 staging，驗收後移除此行切換正式 CA
+TLSAutoDirectoryURL=https://acme-staging-v02.api.letsencrypt.org/directory
+```
+
+程式透過 `autocert.Manager` 取得、快取及續期憑證，更新後供後續 TLS 握手使用，不需因續期重啟。只接受 `TLSAutoDomains` 列出的 SNI，支援大小寫、尾端句點與 IDN 正規化；不支援萬用字元憑證。`TLSAutoEmail` 選填，網域、快取位置與條款同意必填。自動模式與任一固定憑證路徑同時設定會拒絕啟動；設定錯誤不會降級至 HTTP。
+
+第一版使用 TLS-ALPN-01，須讓公開網域 DNS 導向本服務，並將外部 TCP 443 的 TLS 握手直接送至程式。內部 listen port 可以透過映射調整，套件不會改寫傳入 `NewServer()` 的 listen address。無須額外開啟 port 80，也不提供 HTTP 自動轉址。若代理已終止 TLS，請關閉本功能，由代理管理憑證；L4 TCP passthrough 須保留 SNI 與 ACME ALPN。
+
+Docker 部署可使用既有 Dockerfile，將內部服務設定為 `PORT=8443`：
+
+```bash
+docker volume create sherry-autocert
+docker run --name sherryserver -p 443:8443 --env-file ./envfile \
+  --mount type=bind,source="$(pwd)/envfile",target=/app/envfile,readonly \
+  --mount type=volume,source=sherry-autocert,target=/app/data \
+  your-sherryserver-image
+```
+
+快取目錄包含私鑰及 ACME 帳號，須持久化並限制服務帳號存取。Unix 新目錄以 `0700` 建立；既有快取目錄若允許群組或其他使用者存取，初始化會回報錯誤，請由管理者調整權限。Windows 由部署者設定目錄 ACL，只授權服務帳號與必要管理者，程式只檢查讀寫，不自動更改 ACL。容器以非 root 帳號執行時，也須預先設定掛載目錄的擁有者與權限。
+
+快取依 ACME directory URL 的 SHA-256 分目錄保存，staging 與正式 CA 不會共用憑證或帳號。切換正式 CA 後須完成首次正式簽發。啟動日誌的 `Server listener started` 只表示 socket 已開啟；首次握手可能因尚未完成簽發而延遲或失敗，後續重試依 `autocert` 機制執行。續期暫時失敗時仍使用尚有效的憑證，過期後客戶端可能拒絕連線。
+
+呼叫端可在 `Start()` 前設定 `srv.Server.TLSConfig`：版本限制、cipher suites、session tickets、ALPN 及其他不影響憑證管理的欄位會複製保留，並加入 HTTP/2、HTTP/1.1、ACME 所需 ALPN。預設最低 TLS 1.2；明確指定過低或矛盾的版本範圍會拒絕啟動。自行提供憑證、`GetCertificate`、`GetConfigForClient`、`NameToCertificate` 或非預設 `ClientAuth` 會與自動模式衝突。自訂驗證回呼仍由呼叫端負責，須允許 CA 的驗證握手；啟動後不可修改 TLS 設定。
+
+回復固定憑證模式時，設定 `TLSAutoEnabled=false`，填入有效的 `sslCertification`／`sslKeyfile` 並重啟。只有其中一個檔案路徑時，依舊有行為使用 HTTP，因此切換前須確認兩者皆完整。保留自動 TLS 快取供日後重新啟用。
+
+完整設計、測試對照與 staging 驗收步驟見 [TLS 功能與驗收紀錄](tsl.md)。
+
 ### 完整範例：YouTube 直播留言分句轉送
 
 已新增可執行範例於：

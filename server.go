@@ -1,5 +1,5 @@
 /*
-   StaticServer 主程式
+StaticServer 主程式
 */
 package SherryServer
 
@@ -13,6 +13,7 @@ import (
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -37,6 +38,7 @@ type Server struct {
 	Socketio       *SherrySocketIO.SrySocketio
 	Calendar       *SherryCalendar.Calendar
 	Error          *SherryErrorExecuter.ErrorExecuter
+	tls            *serverTLS
 	/*
 	   LiveKit	*SryLiveKit.LiveKit
 	   Template	*SherryPages.Page
@@ -86,7 +88,7 @@ func (app *Server) gracefulShutdown() {
 	// kill -9 is syscall.SIGKILL but can't be catch, so don't need add it
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
-	signal.Notify(interrupt, os.Interrupt)
+	defer signal.Stop(interrupt)
 	sig := <-interrupt
 	/*
 	   if app.Linebot != nil {
@@ -106,21 +108,31 @@ func (app *Server) gracefulShutdown() {
 
 // Start runs ListenAndServe on the http.Server with graceful shutdown
 func (app *Server) Start() {
+	plan, err := app.prepareTLS()
+	if err != nil {
+		app.Logger.Fatal("TLS initialization failed", zap.Error(err))
+		return
+	}
+	addr := app.Server.Addr
+	if addr == "" {
+		addr = ":http" // Match http.Server.ListenAndServe's default address.
+	}
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		app.Logger.Fatal("Listen failed", zap.Error(err), zap.String("addr", app.Server.Addr))
+		return
+	}
 	defer app.gracefulShutdown()
 	go func() {
-		keyfile := os.Getenv("sslKeyfile")
-		certfile := os.Getenv("sslCertification")
-		if keyfile == "" || certfile == "" {
-			if err := app.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				app.Logger.Fatal(err.Error(), zap.String("addr", app.Server.Addr))
-			}
-		} else {
-			if err := app.Server.ListenAndServeTLS(certfile, keyfile); err != nil && err != http.ErrServerClosed {
-				app.Logger.Fatal(err.Error(), zap.String("addr", app.Server.Addr))
-			}
+		if err := plan.serve(app.Server, listener); err != nil && err != http.ErrServerClosed {
+			app.Logger.Fatal(err.Error(), zap.String("addr", app.Server.Addr))
 		}
 	}()
-	app.Logger.Info("Server is ready to handle requests at " + app.Server.Addr)
+	fields := []zap.Field{zap.String("addr", listener.Addr().String()), zap.String("mode", plan.mode())}
+	if plan.settings.auto {
+		fields = append(fields, zap.Strings("domains", plan.settings.domains), zap.String("cache", plan.settings.cacheDir))
+	}
+	app.Logger.Info("Server listener started", fields...)
 }
 
 // NewServer 建立Server
@@ -130,6 +142,14 @@ func NewServer(listenAddr, documentRoot, templatePath string) (*Server, error) {
 		return nil, fmt.Errorf("envfile not found.")
 	}
 	name = os.Getenv("SystemName")
+	tlsConfig, err := tlsSettingsFromEnv()
+	if err != nil {
+		return nil, err
+	}
+	tlsPlan, err := newServerTLS(tlsConfig)
+	if err != nil {
+		return nil, err
+	}
 	logger, err := zap.NewDevelopment(zap.AddStacktrace(zapcore.FatalLevel))
 	if err != nil {
 		return nil, err
@@ -166,5 +186,9 @@ func NewServer(listenAddr, documentRoot, templatePath string) (*Server, error) {
 	// ErrorExecuter
 	sryerror, _ := SherryErrorExecuter.NewErrorExecuter()
 
-	return &Server{name, logger, srv, orglists, methodlists, sessionManager, skio, cal, sryerror}, nil
+	return &Server{
+		SystemName: name, Logger: logger, Server: srv, OriginAllow: orglists,
+		MethodAllow: methodlists, SessionManager: sessionManager, Socketio: skio,
+		Calendar: cal, Error: sryerror, tls: tlsPlan,
+	}, nil
 }
